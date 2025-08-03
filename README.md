@@ -28,39 +28,75 @@ autoscript/
 └── start.sh             # Główny skrypt wykonawczy
 ```
 
-## 4. Użycie
+## 4. Szybki Start: Instalacja na Nowym Serwerze
 
-### Krok 1: Konfiguracja
+Ta instrukcja poprowadzi Cię krok po kroku przez proces wdrożenia na świeżo zainstalowanym serwerze z systemem Debian 12 lub Ubuntu 22.04+.
 
-1.  Sklonuj repozytorium na serwer: `git clone ...`
-2.  Przejdź do folderu: `cd autoscript`
-3.  Stwórz plik konfiguracyjny z szablonu: `cp autoscript.conf.example autoscript.conf`
-4.  Otwórz `autoscript.conf` i **dokładnie wypełnij wszystkie zmienne**, zwłaszcza te w sekcji `WYMAGANE`.
+### Krok 1: Zaloguj się jako root i zainstaluj `git`
 
-### Krok 2: Uruchomienie Skryptu
+Połącz się z nowym serwerem jako użytkownik `root`. Następnie zaktualizuj listę pakietów i zainstaluj `git`:
 
-Skryptem zarządza się za pomocą komend. Wszystkie komendy należy wykonywać z uprawnieniami `root` (np. `sudo ./start.sh <komenda>`).
+```bash
+apt update
+apt install -y git
+```
 
-**Główne Komendy:**
+### Krok 2: Sklonuj repozytorium
 
-- `sudo ./start.sh install`
-  **Pełna, pierwsza instalacja.** Wykonuje wszystkie niezbędne kroki: instaluje pakiety, konfiguruje zabezpieczenia, wdraża Dockera, Traefika i stos monitoringu. Uruchom tę komendę na nowym serwerze.
+Będąc w katalogu domowym roota (`/root`), sklonuj ten projekt:
 
-- `sudo ./start.sh uninstall`
-  **Pełna deinstalacja.** Zatrzymuje i usuwa wszystkie usługi, kontenery, wolumeny, a także odinstalowuje pakiety i wycofuje zmiany konfiguracyjne. **Używaj z ostrożnością!**
+```bash
+git clone https://github.com/twoja-nazwa-uzytkownika/autoscript.git
+cd autoscript
+```
 
-**Komendy do Zarządzania Modułami:**
+### Krok 3: Skonfiguruj skrypt
 
-Możesz zarządzać poszczególnymi częściami systemu niezależnie.
+Skopiuj plik z przykładem, aby stworzyć własną konfigurację:
 
-- `sudo ./start.sh deploy_traefik`
-- `sudo ./start.sh deploy_monitoring`
-- `sudo ./start.sh deploy_database` (jeśli włączone w konfigu)
+```bash
+cp autoscript.conf.example autoscript.conf
+```
 
-**Komendy Pomocnicze:**
+Teraz musisz edytować ten plik. Użyj prostego edytora, np. `nano`:
 
-- `sudo ./start.sh reboot` - Bezpieczny restart serwera.
-- `sudo ./start.sh update` - Aktualizacja pakietów systemowych.
+```bash
+nano autoscript.conf
+```
+
+W pliku konfiguracyjnym **musisz** wypełnić co najmniej dwie zmienne:
+
+- `PUBLIC_KEY`: Wklej tutaj swój **publiczny** klucz SSH. Jest niezbędny, abyś mógł zalogować się po restarcie zabezpieczeń.
+- `CF_DNS_API_TOKEN`: Wklej token API z Cloudflare.
+
+Przejrzyj też inne zmienne, takie jak `PRIMARY_DOMAIN` i `ADMIN_EMAIL`, i dostosuj je do swoich potrzeb. Zapisz plik i wyjdź z edytora (w `nano`: `Ctrl+X`, potem `Y` i `Enter`).
+
+### Krok 4: Uruchom instalację
+
+Upewnij się, że jesteś w folderze `autoscript`. Teraz uruchom główną komendę instalacyjną. Skrypt musi być wykonany z uprawnieniami roota.
+
+```bash
+./start.sh install
+```
+
+Skrypt rozpocznie pracę. Proces może potrwać od kilku do kilkunastu minut, w zależności od szybkości serwera i połączenia internetowego. Na ekranie będą wyświetlane logi z postępu prac.
+
+### Krok 5: Ważne kroki po instalacji
+
+Gdy skrypt zakończy pracę z komunikatem o sukcesie, Twoje środowisko jest gotowe, ale zaszły kluczowe zmiany w zabezpieczeniach:
+
+1.  **Logowanie na `root` jest ZABLOKOWANE.**
+2.  **Port SSH został ZMIENIONY** na losowy numer. Aby go poznać, wykonaj:
+    ```bash
+    cat /root/ssh_port.txt
+    ```
+3.  **Nowy użytkownik `admin` został stworzony.** Możesz się na niego zalogować, używając swojego klucza SSH i nowego portu:
+    ```bash
+    ssh admin@<IP_TWOJEGO_SERWERA> -p <NOWY_PORT_Z_PLIKU>
+    ```
+4.  **Konfiguracja 2FA (TOTP):** Przy pierwszej próbie użycia `sudo` (np. `sudo ls /root`), na ekranie pojawi się kod QR. Zeskanuj go aplikacją typu Google Authenticator lub Authy i **zapisz kody zapasowe w bezpiecznym miejscu!**
+
+Twoja instalacja jest zakończona i serwer jest zabezpieczony. Dalsze zarządzanie możesz prowadzić za pomocą pozostałych komend skryptu (np. `./start.sh deploy_database`).
 
 ## 5. Opis Modułów Opcjonalnych
 

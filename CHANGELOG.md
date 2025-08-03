@@ -1,5 +1,17 @@
 # Changelog
 
+## 2025-08-03 (v2.1)
+
+### Dodano
+
+- **Instrukcja "Szybki Start"**: Dodano do `README.md` szczegółową sekcję, która krok po kroku prowadzi nowego użytkownika przez proces instalacji na świeżym serwerze Debian/Ubuntu.
+
+### Zmieniono
+
+- Poprawiono przejrzystość i strukturę dokumentacji `README.md`.
+
+---
+
 ## 2025-08-03 (v2.0)
 
 ### Dodano
