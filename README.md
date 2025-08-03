@@ -90,6 +90,66 @@ AutoScript nie traktuje bezpieczeństwa jako opcji, ale jako fundamentalny eleme
 - **Zarządzanie Sekretami (`sops`)**: Wszystkie wrażliwe dane – klucze API, hasła do baz danych, tokeny – są szyfrowane na dysku za pomocą `sops` i klucza `age`. Nigdy nie są przechowywane jako jawny tekst.
 - **Szyfrowane Kopie Zapasowe**: Wszystkie kopie zapasowe tworzone przez `Restic` są szyfrowane end-to-end przed wysłaniem ich do zewnętrznej lokalizacji (Backblaze B2). Bez hasła do repozytorium nikt nie jest w stanie odczytać Twoich danych.
 
-## 7. Licencja
+## 7. Kroki po Instalacji: Co Dalej?
+
+Gratulacje! Twoja platforma jest w pełni zainstalowana, zabezpieczona i gotowa do pracy. Oto co powinieneś zrobić teraz, aby w pełni przejąć nad nią kontrolę i zacząć z niej korzystać.
+
+### 1. Pierwsze Logowanie i Konfiguracja Aplikacji
+
+Każda z zainstalowanych usług jest teraz dostępna pod domeną, którą skonfigurowałeś w pliku `autoscript.conf`. Czas je odwiedzić i dokończyć ich konfigurację z poziomu interfejsu webowego.
+
+- **Mastodon (`https://twoja-domena.ovh`)**: Przejdź na stronę główną i zarejestruj swoje pierwsze konto. Pierwsze zarejestrowane konto automatycznie otrzymuje rolę właściciela instancji.
+- **Discourse (`https://forum.twoja-domena.ovh`)**: Podobnie jak w Mastodonie, zarejestruj konto administratora, aby zacząć konfigurować kategorie i ustawienia forum.
+- **WordPress (`https://blog.twoja-domena.ovh`)**: Przejdź przez słynny "pięciominutowy instalator" WordPressa, aby ustawić tytuł strony, stworzyć konto administratora i zacząć pisać.
+- **FreshRSS (`https://rss.twoja-domena.ovh`)**: Zaloguj się i zacznij dodawać swoje ulubione kanały RSS.
+- **Serwer Poczty (`https://twoja-domena.ovh/admin`)**: Zaloguj się do panelu administracyjnego poczty, używając hasła `MAIL_ADMIN_PASSWORD` z pliku konfiguracyjnego. Tutaj możesz dodawać domeny i skrzynki pocztowe.
+- **Pulpit Statusu (`https://status.twoja-domena.ovh`)**: Skonfiguruj Uptime Kuma, tworząc monitory dla wszystkich swoich nowych usług, aby śledzić ich dostępność.
+
+### 2. Dostęp do Danych i Sekretów
+
+Wszystkie dane Twoich aplikacji (bazy danych, wgrane pliki) znajdują się w folderze `/opt/services/`. Możesz je przeglądać jako użytkownik `admin`.
+
+Jeśli potrzebujesz sprawdzić wygenerowane hasło do bazy danych lub inny sekret, użyj wbudowanej komendy:
+
+```bash
+sudo ./start.sh secrets:view <nazwa_usługi>
+# Przykład:
+sudo ./start.sh secrets:view mastodon
+```
+
+### 3. Zarządzanie Kopiami Zapasowymi
+
+Kopie zapasowe są skonfigurowane, ale warto sprawdzić ich status. Możesz ręcznie uruchomić backup lub wylistować istniejące migawki.
+
+```bash
+# Ręczne uruchomienie kopii zapasowej
+sudo ./start.sh backup:run
+
+# Wyświetlenie listy wszystkich kopii w repozytorium
+sudo ./start.sh backup:list
+```
+
+### 4. Monitorowanie Systemu
+
+Zapoznaj się z pulpitem Grafany, aby zobaczyć, jak pracuje Twój serwer.
+
+- **Grafana (`https://grafana.twoja-domena.ovh`)**: Zaloguj się, używając hasła `GRAFANA_ADMIN_PASSWORD` z pliku konfiguracyjnego. Znajdziesz tam prekonfigurowane dashboardy pokazujące użycie CPU, pamięci, stan kontenerów i wiele więcej.
+- **Alertmanager (`https://alertmanager.twoja-domena.ovh`)**: Tutaj możesz zobaczyć aktywne alerty. Domyślnie są one wysyłane na Twój `ADMIN_EMAIL`.
+
+### 5. Aktualizacje
+
+Pamiętaj, aby regularnie aktualizować zarówno system operacyjny, jak i sam skrypt AutoScript.
+
+```bash
+# Aktualizacja pakietów systemowych
+sudo apt update && sudo apt upgrade -y
+
+# Aktualizacja AutoScript do najnowszej wersji
+sudo ./start.sh self-update
+```
+
+Twoja platforma jest teraz w pełni w Twoich rękach. Eksperymentuj, twórz i ciesz się wolnością posiadania własnej, potężnej infrastruktury!
+
+## 8. Licencja
 
 Projekt jest udostępniany na licencji MIT.
