@@ -1,5 +1,17 @@
 # Changelog
 
+## 2025-08-03 (v2.2)
+
+### Dodano
+
+- **Instrukcja pozyskiwania kluczy**: Dodano do `README.md` nową, szczegółową sekcję "Skąd wziąć wymagane klucze?" z linkami i instrukcjami krok po kroku, jak wygenerować klucz SSH i token API Cloudflare.
+
+### Zmieniono
+
+- Poprawiono ogólną strukturę i czytelność dokumentacji `README.md`.
+
+---
+
 ## 2025-08-03 (v2.1)
 
 ### Dodano

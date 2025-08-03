@@ -28,7 +28,51 @@ autoscript/
 └── start.sh             # Główny skrypt wykonawczy
 ```
 
-## 4. Szybki Start: Instalacja na Nowym Serwerze
+## 4. Skąd wziąć wymagane klucze?
+
+Plik `autoscript.conf` wymaga podania dwóch kluczowych informacji. Oto jak je zdobyć:
+
+### 1. `PUBLIC_KEY` (Publiczny klucz SSH)
+
+Klucz SSH służy do bezpiecznego logowania na serwer bez hasła. Składa się z dwóch części: prywatnej (którą trzymasz na swoim komputerze) i publicznej (którą wgrywasz na serwer).
+
+**Jeśli nie masz jeszcze klucza SSH:**
+
+Otwórz terminal na swoim komputerze (Linux, macOS) lub Git Bash/WSL (Windows) i wpisz:
+
+```bash
+ssh-keygen -t ed25519 -C "twoj_email@example.com"
+```
+
+Naciśnij Enter, aby zaakceptować domyślną lokalizację zapisu. Możesz opcjonalnie podać hasło do klucza dla dodatkowego bezpieczeństwa.
+
+**Aby uzyskać wartość do wklejenia:**
+
+Wyświetl zawartość swojego klucza publicznego. Domyślnie znajduje się on w pliku `~/.ssh/id_ed25519.pub`. Użyj komendy:
+
+```bash
+cat ~/.ssh/id_ed25519.pub
+```
+
+Skopiuj całą wyświetloną linię (zaczynającą się od `ssh-ed25519 ...`) i wklej ją jako wartość zmiennej `PUBLIC_KEY` w pliku `autoscript.conf`.
+
+### 2. `CF_DNS_API_TOKEN` (Token API Cloudflare)
+
+Ten token pozwala skryptowi na automatyczne zarządzanie rekordami DNS Twojej domeny, co jest niezbędne do generowania certyfikatów SSL przez Traefik.
+
+1.  **Zaloguj się** na swoje konto [Cloudflare](https://dash.cloudflare.com).
+2.  Przejdź do sekcji **"My Profile"** (w prawym górnym rogu) > **"API Tokens"**.
+    - *Bezpośredni link:* [https://dash.cloudflare.com/profile/api-tokens](https://dash.cloudflare.com/profile/api-tokens)
+3.  Kliknij przycisk **"Create Token"**.
+4.  Znajdź szablon **"Edit zone DNS"** i kliknij **"Use template"**.
+5.  Skonfiguruj token:
+    - **Permissions**: Upewnij się, że jest `Zone:DNS:Edit`.
+    - **Zone Resources**: Wybierz `Include` > `Specific zone` > i wybierz z listy swoją domenę, którą będziesz zarządzać.
+    - **Client IP Address Filtering** i **TTL**: Możesz pozostawić domyślne.
+6.  Kliknij **"Continue to summary"**, a następnie **"Create Token"**.
+7.  **Skopiuj wygenerowany token.** To jedyny moment, kiedy jest on w pełni widoczny. Wklej go jako wartość zmiennej `CF_DNS_API_TOKEN` w pliku `autoscript.conf`.
+
+## 5. Szybki Start: Instalacja na Nowym Serwerze
 
 Ta instrukcja poprowadzi Cię krok po kroku przez proces wdrożenia na świeżo zainstalowanym serwerze z systemem Debian 12 lub Ubuntu 22.04+.
 
@@ -64,12 +108,7 @@ Teraz musisz edytować ten plik. Użyj prostego edytora, np. `nano`:
 nano autoscript.conf
 ```
 
-W pliku konfiguracyjnym **musisz** wypełnić co najmniej dwie zmienne:
-
-- `PUBLIC_KEY`: Wklej tutaj swój **publiczny** klucz SSH. Jest niezbędny, abyś mógł zalogować się po restarcie zabezpieczeń.
-- `CF_DNS_API_TOKEN`: Wklej token API z Cloudflare.
-
-Przejrzyj też inne zmienne, takie jak `PRIMARY_DOMAIN` i `ADMIN_EMAIL`, i dostosuj je do swoich potrzeb. Zapisz plik i wyjdź z edytora (w `nano`: `Ctrl+X`, potem `Y` i `Enter`).
+Postępuj zgodnie z instrukcją z sekcji **"Skąd wziąć wymagane klucze?"**, aby wypełnić `PUBLIC_KEY` i `CF_DNS_API_TOKEN`. Przejrzyj też inne zmienne i dostosuj je do swoich potrzeb. Zapisz plik i wyjdź z edytora (w `nano`: `Ctrl+X`, potem `Y` i `Enter`).
 
 ### Krok 4: Uruchom instalację
 
@@ -79,7 +118,7 @@ Upewnij się, że jesteś w folderze `autoscript`. Teraz uruchom główną komen
 ./start.sh install
 ```
 
-Skrypt rozpocznie pracę. Proces może potrwać od kilku do kilkunastu minut, w zależności od szybkości serwera i połączenia internetowego. Na ekranie będą wyświetlane logi z postępu prac.
+Skrypt rozpocznie pracę. Proces może potrwać od kilku do kilkunastu minut. Na ekranie będą wyświetlane logi z postępu prac.
 
 ### Krok 5: Ważne kroki po instalacji
 
@@ -98,7 +137,7 @@ Gdy skrypt zakończy pracę z komunikatem o sukcesie, Twoje środowisko jest got
 
 Twoja instalacja jest zakończona i serwer jest zabezpieczony. Dalsze zarządzanie możesz prowadzić za pomocą pozostałych komend skryptu (np. `./start.sh deploy_database`).
 
-## 5. Opis Modułów Opcjonalnych
+## 6. Opis Modułów Opcjonalnych
 
 Możesz włączyć je w pliku `autoscript.conf`.
 
@@ -107,7 +146,7 @@ Możesz włączyć je w pliku `autoscript.conf`.
 - **Loki**: System do agregacji logów z Twoich kontenerów. Umożliwia ich wygodne przeszukiwanie w Grafanie.
 - **Restic Backup**: Instaluje i konfiguruje `restic` do tworzenia regularnych, szyfrowanych kopii zapasowych do chmury (np. AWS S3, Backblaze B2). **Wymaga dodatkowej konfiguracji po stronie dostawcy chmury!**
 
-## 6. Co robić po instalacji?
+## 7. Co robić po instalacji?
 
 Po zakończeniu komendy `install`:
 
