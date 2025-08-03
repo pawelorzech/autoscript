@@ -1,17 +1,27 @@
 global:
-  smtp_smarthost: '$ALERT_SMTP_HOST'
-  smtp_from: '$ALERT_SMTP_FROM'
-  smtp_auth_username: '$ALERT_SMTP_USER'
+  smtp_smarthost: '${ALERT_SMTP_HOST}:587'
+  smtp_from: '${ADMIN_EMAIL}'
+  smtp_auth_username: '${ALERT_SMTP_USER}'
   smtp_auth_password_file: '/etc/alertmanager/secrets/smtp_pass'
+
 route:
   group_by: ['alertname']
   group_wait: 10s
   group_interval: 10s
   repeat_interval: 1h
-  receiver: 'email'
+  receiver: 'email-notification'
+
 receivers:
-- name: 'email'
+- name: 'email-notification'
   email_configs:
-  - to: '$ADMIN_EMAIL'
-    subject: 'Alert: {{ "{{" }} .GroupLabels.alertname {{ "}}" }}'
+  - to: '${ADMIN_EMAIL}'
+    subject: 'AutoScript Alert: {{ .GroupLabels.alertname }}'
+    text: "Alert: {{ .Annotations.summary }}\nDescription: {{ .Annotations.description }}\n"
     send_resolved: true
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'dev', 'instance']

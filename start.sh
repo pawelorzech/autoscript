@@ -172,11 +172,15 @@ local traefik_dir="/opt/services/traefik"
     cp "$SCRIPT_DIR/templates/traefik/tls.yml" "$traefik_dir/dynamic/tls.yml"
     
     # Create acme.json with proper permissions
-    touch "$traefik_dir/data/acme.json"
+touch "$traefik_dir/data/acme.json"
     chmod 600 "$traefik_dir/data/acme.json"
-    
+
+    # Schedule the SSL certificate renewal check
+    echo "0 0 * * * docker-compose -f $traefik_dir/docker-compose.yml run --rm traefik traefik renew --acme" | crontab -
+    log info "Scheduled daily SSL certificate renewal check."
+
     # Create traefik_proxy network
-    docker network create traefik_proxy 2>/dev/null || true
+    docker network create traefik_proxy 2e/dev/null || true
     
     log info "Uruchamianie kontenera Traefik..."
     (cd "$traefik_dir" && docker-compose up -d)
@@ -191,10 +195,50 @@ cmd_deploy_monitoring() {
         return 0
     fi
     log info "Wdrażam stos monitoringu..."
-    # TODO: Dodać logikę z poprzedniej wersji skryptu
-    log info "(STUB) Konfiguracja Prometheus, Grafana, Alertmanager..."
-    log info "(STUB) Uruchamianie kontenerów monitoringu..."
-    log info "Wdrożenie monitoringu zakończone."
+    
+    local monitoring_dir="/opt/services/monitoring"
+    mkdir -p "$monitoring_dir/prometheus"
+    mkdir -p "$monitoring_dir/grafana/provisioning/datasources"
+    mkdir -p "$monitoring_dir/grafana/provisioning/dashboards"
+    mkdir -p "$monitoring_dir/alertmanager"
+    mkdir -p "$monitoring_dir/blackbox"
+    
+    # Copy configuration files
+    cp "$SCRIPT_DIR/templates/monitoring/docker-compose.yml" "$monitoring_dir/docker-compose.yml"
+    cp "$SCRIPT_DIR/templates/monitoring/prometheus.yml" "$monitoring_dir/prometheus/prometheus.yml"
+    cp "$SCRIPT_DIR/templates/monitoring/alertmanager.yml" "$monitoring_dir/alertmanager/alertmanager.yml"
+    cp "$SCRIPT_DIR/templates/monitoring/blackbox.yml" "$monitoring_dir/blackbox/blackbox.yml"
+    cp "$SCRIPT_DIR/templates/monitoring/alerts.yml" "$monitoring_dir/prometheus/alerts.yml"
+    cp "$SCRIPT_DIR/templates/monitoring/prometheus-datasource.yml" "$monitoring_dir/grafana/provisioning/datasources/prometheus.yaml"
+    cp "$SCRIPT_DIR/templates/monitoring/promtail-config.yml" "$monitoring_dir/promtail-config.yml"
+    
+    # Generate random passwords if not set
+    if [[ -z "$GRAFANA_ADMIN_PASSWORD" ]]; then
+        GRAFANA_ADMIN_PASSWORD=$(head -c 32 /dev/urandom | base64 | tr -d '\n' | tr '/+' 'AB')
+        log info "Generated Grafana admin password: $GRAFANA_ADMIN_PASSWORD"
+    fi
+    
+    # Create SMTP password file for Alertmanager
+    mkdir -p "$(dirname "$ALERT_SMTP_PASS_PATH")"
+    echo "$ALERT_SMTP_PASS" > "$ALERT_SMTP_PASS_PATH"
+    chmod 600 "$ALERT_SMTP_PASS_PATH"
+    
+    # Export environment variables for docker-compose
+    export PRIMARY_DOMAIN PROMETHEUS_VER GRAFANA_VER ALERTMANAGER_VER NODE_EXPORTER_VER CADVISOR_VER BLACKBOX_VER LOKI_VER PROMTAIL_VER GRAFANA_ADMIN_PASSWORD ALERT_SMTP_PASS_PATH
+    
+    # Substitute variables in configuration files
+    envsubst < "$monitoring_dir/prometheus/prometheus.yml" > "$monitoring_dir/prometheus/prometheus.yml.tmp" && mv "$monitoring_dir/prometheus/prometheus.yml.tmp" "$monitoring_dir/prometheus/prometheus.yml"
+    envsubst < "$monitoring_dir/alertmanager/alertmanager.yml" > "$monitoring_dir/alertmanager/alertmanager.yml.tmp" && mv "$monitoring_dir/alertmanager/alertmanager.yml.tmp" "$monitoring_dir/alertmanager/alertmanager.yml"
+    envsubst < "$monitoring_dir/docker-compose.yml" > "$monitoring_dir/docker-compose.yml.tmp" && mv "$monitoring_dir/docker-compose.yml.tmp" "$monitoring_dir/docker-compose.yml"
+    
+    log info "Uruchamianie kontenerów monitoringu..."
+    (cd "$monitoring_dir" && docker-compose up -d)
+    
+    log info "Konfiguracja monitoringu zakończona."
+    log info "Grafana dostępna pod: https://grafana.${PRIMARY_DOMAIN}"
+    log info "Prometheus dostępny pod: https://prometheus.${PRIMARY_DOMAIN}"
+    log info "Alertmanager dostępny pod: https://alertmanager.${PRIMARY_DOMAIN}"
+    
     add_receipt 'monitoring'
 }
 
@@ -265,6 +309,8 @@ main() {
         backup:run)         cmd_backup "run" ;;
         backup:list)        cmd_backup "list" ;;
         backup:restore)     cmd_backup "restore" "$@" ;;
+        ssl:renew)          cmd_ssl_renew "$@" ;;
+        ssl:status)         cmd_ssl_status "$@" ;;
         self-update)        cmd_self_update "$@" ;;
         uninstall)          cmd_uninstall "$@" ;;
         help|*)             cmd_help ;;
@@ -279,6 +325,7 @@ cmd_help() {
     echo "  deploy_mastodon, deploy_traefik, deploy_monitoring"
     echo "  secrets:edit <service>, secrets:view <service>"
     echo "  backup:init, backup:run, backup:list, backup:restore <snapshot_id>"
+    echo "  ssl:renew, ssl:status"
     echo "  self-update, uninstall, help"
 }
 
@@ -324,6 +371,83 @@ cmd_backup() {
     esac
 }
 
-# ... (reszta funkcji)
+# SSL Certificate Management
+cmd_ssl_renew() {
+    log info "Ręczne odnawianie certyfikatów SSL..."
+    local traefik_dir="/opt/services/traefik"
+    if [[ ! -d "$traefik_dir" ]]; then
+        log error "Traefik nie jest zainstalowany. Uruchom najpierw deploy_traefik."
+        exit 1
+    fi
+    
+    log info "Wymuszenie odnowienia certyfikatów przez Traefik..."
+    (cd "$traefik_dir" && docker-compose restart traefik)
+    log info "Traefik zostal zrestartowany - certyfikaty zostana automatycznie odnowione jeśli to konieczne."
+}
+
+cmd_ssl_status() {
+    log info "Sprawdzanie statusu certyfikatów SSL..."
+    local traefik_dir="/opt/services/traefik"
+    if [[ ! -d "$traefik_dir" ]]; then
+        log error "Traefik nie jest zainstalowany. Uruchom najpierw deploy_traefik."
+        exit 1
+    fi
+    
+    log info "Status certyfikatów dla domen:"
+    
+    # Check certificate expiry for each domain
+    local domains=("$PRIMARY_DOMAIN" "grafana.$PRIMARY_DOMAIN" "prometheus.$PRIMARY_DOMAIN" "alertmanager.$PRIMARY_DOMAIN")
+    
+    for domain in "${domains[@]}"; do
+        local expiry_date=$(echo | openssl s_client -servername "$domain" -connect "$domain:443" 2>/dev/null | openssl x509 -noout -dates 2>/dev/null | grep notAfter | cut -d= -f2)
+        if [[ -n "$expiry_date" ]]; then
+            local expiry_timestamp=$(date -d "$expiry_date" +%s 2>/dev/null || echo "0")
+            local current_timestamp=$(date +%s)
+            local days_until_expiry=$(( (expiry_timestamp - current_timestamp) / 86400 ))
+            
+            if [[ $days_until_expiry -gt 7 ]]; then
+                log info "✓ $domain: Certyfikat ważny jeszcze $days_until_expiry dni (wygasa: $expiry_date)"
+            elif [[ $days_until_expiry -gt 0 ]]; then
+                log warn "⚠ $domain: Certyfikat wygasa za $days_until_expiry dni (wygasa: $expiry_date)"
+            else
+                log error "✗ $domain: Certyfikat wygasł lub nie można go sprawdzić"
+            fi
+        else
+            log error "✗ $domain: Nie można pobrać informacji o certyfikacie"
+        fi
+    done
+}
+
+# Enhanced logging function with centralized log rotation
+setup_log_rotation() {
+    local logrotate_config="/etc/logrotate.d/autoscript"
+    
+    cat > "$logrotate_config" << EOF
+$LOG_FILE {
+    daily
+    rotate 30
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 640 root adm
+    postrotate
+        systemctl reload rsyslog > /dev/null 2>&1 || true
+    endscript
+}
+
+/opt/services/*/logs/*.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 644 root root
+}
+EOF
+    
+    log info "Konfiguracja rotacji logów została utworzona w $logrotate_config"
+}
 
 main "$@"
