@@ -26,11 +26,11 @@ CF_DNS_API_TOKEN=''
 
 # Twoja główna domena zarządzana przez Cloudflare.
 # Przykład: PRIMARY_DOMAIN='example.com'
-PRIMARY_DOMAIN='orzech.me'
+PRIMARY_DOMAIN='social.ovh'
 
 # Adres e-mail używany do powiadomień od Let's Encrypt oraz alertów systemowych.
 # Przykład: ADMIN_EMAIL='admin@example.com'
-ADMIN_EMAIL='admin@orzech.me'
+ADMIN_EMAIL='admin@social.ovh'
 
 # Strefa czasowa serwera.
 # Pełna lista: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
@@ -41,10 +41,10 @@ TIMEZONE='Europe/Warsaw'
 # USTAWIENIA POWIADOMIEŃ (SMTP)
 # -------------------------------------------------------------------
 
-ALERT_SMTP_HOST='mail.drap.ovh:587'
-ALERT_SMTP_USER='alerts@drap.ovh'
+ALERT_SMTP_HOST='mail.social.ovh:587'
+ALERT_SMTP_USER='alerts@social.ovh'
 ALERT_SMTP_PASS='' # Pozostaw puste, aby wygenerować losowe
-ALERT_SMTP_FROM='alerts@drap.ovh'
+ALERT_SMTP_FROM='alerts@social.ovh'
 
 # -------------------------------------------------------------------
 # USTAWIENIA USŁUG

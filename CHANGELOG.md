@@ -1,5 +1,14 @@
 # Changelog
 
+## 2025-08-03 (v2.3)
+
+### Zmieniono
+
+- **Domyślna Struktura Domen**: Zmieniono domyślną konfigurację projektu, aby używać `social.ovh` jako domeny głównej dla Mastodona, a usługi pomocnicze (Grafana, Prometheus) umieścić na jej subdomenach.
+- Zaktualizowano wszystkie odpowiednie szablony konfiguracyjne i dokumentację, aby odzwierciedlały tę zmianę.
+
+---
+
 ## 2025-08-03 (v2.2)
 
 ### Dodano

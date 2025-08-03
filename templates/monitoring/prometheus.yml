@@ -20,12 +20,11 @@ scrape_configs:
     params: { module: [http_2xx] }
     static_configs:
       - targets:
-        - https://forum.yeswas.pl
-        - https://social.ovh
-        - https://rss.social.ovh
-        - https://pawelorzech.pl
-        - https://dash.orzech.me
-        - https://run.orzech.me
+        - https://forum.yeswas.pl # Domena zewnętrzna
+        - https://social.ovh # Główna domena Mastodona
+        - https://grafana.social.ovh
+        - https://prometheus.social.ovh
+        - https://alertmanager.social.ovh
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target

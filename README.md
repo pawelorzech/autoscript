@@ -153,4 +153,4 @@ Po zakończeniu komendy `install`:
 1.  **Nowy Port SSH:** Został zmieniony na losowy. Znajdziesz go w pliku `/root/ssh_port.txt`.
 2.  **Logowanie**: Logowanie na `root` jest zablokowane. Użyj użytkownika `admin` z Twoim kluczem SSH i nowym portem: `ssh admin@<IP> -p <PORT>`.
 3.  **TOTP (2FA)**: Przy pierwszym użyciu `sudo` zostaniesz poproszony o skonfigurowanie aplikacji do uwierzytelniania (np. Google Authenticator).
-4.  **Dostęp do usług**: Usługi będą dostępne pod subdomenami Twojej domeny (np. `https://grafana.twojadomena.pl`).
+4.  **Dostęp do usług**: Usługi będą dostępne pod subdomenami Twojej domeny (np. `https://grafana.social.ovh`).
