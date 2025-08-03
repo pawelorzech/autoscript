@@ -42,7 +42,28 @@ AutoScript buduje kompleksowy ekosystem usług, gotowych do użycia zaraz po ins
 
 ## 2. Przewodnik Konfiguracyjny: Zdobywanie Kluczy
 
-(Ta sekcja pozostaje taka sama jak w poprzedniej wersji, opisując pozyskiwanie klucza SSH i tokenu Cloudflare. Dodatkowo należy opisać pozyskiwanie kluczy do Backblaze B2).
+### Klucz SSH
+
+1. Wygeneruj parę kluczy SSH na swoim lokalnym komputerze:
+   ```bash
+   ssh-keygen -t ed25519 -C "twoj-email@example.com"
+   ```
+2. Skopiuj zawartość klucza publicznego:
+   ```bash
+   cat ~/.ssh/id_ed25519.pub
+   ```
+3. Użyj tej zawartości jako wartość `PUBLIC_KEY` w pliku konfiguracyjnym.
+
+### Token API Cloudflare
+
+1. Zaloguj się do [Cloudflare Dashboard](https://dash.cloudflare.com/)
+2. Przejdź do **My Profile** > **API Tokens**
+3. Kliknij **Create Token** i wybierz szablon **Custom token**
+4. Ustaw uprawnienia:
+   - Zone: Zone:Read
+   - Zone: DNS:Edit
+5. Wybierz odpowiednią strefę DNS
+6. Skopiuj wygenerowany token jako `CF_DNS_API_TOKEN`
 
 ### Klucze do Kopii Zapasowych (Backblaze B2)
 
