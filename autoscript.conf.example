@@ -54,5 +54,23 @@ POSTGRES_PASSWORD=''
 DISCOURSE_DB_PASSWORD=''
 WORDPRESS_DB_PASSWORD=''
 
+# --- SMTP Settings for Alerts ---
+ALERT_SMTP_HOST='smtp.gmail.com'
+ALERT_SMTP_USER=''
+ALERT_SMTP_PASS=''
+ALERT_SMTP_PASS_PATH='/opt/services/.secrets/smtp_pass'
+
+# --- Monitoring Passwords ---
+GRAFANA_ADMIN_PASSWORD=''
+
 # --- Wersje Obrazów Docker ---
-# ... (wersje dla wszystkich usług)
+TRAEFIK_VER='v3.0'
+POSTGRES_VER='15-alpine'
+PROMETHEUS_VER='v2.45.0'
+GRAFANA_VER='10.0.0'
+ALERTMANAGER_VER='v0.25.0'
+NODE_EXPORTER_VER='v1.6.0'
+CADVISOR_VER='v0.47.0'
+BLACKBOX_VER='v0.24.0'
+LOKI_VER='2.8.0'
+PROMTAIL_VER='2.8.0'

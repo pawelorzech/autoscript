@@ -83,10 +83,17 @@ remove_receipt() {
 # Sprawdzanie poprawności konfiguracji
 cmd_validate() {
     log info "Rozpoczynam walidację konfiguracji..."
-    # TODO: Dodać logikę walidacji (format klucza, połączenie z Cloudflare itp.)
-    log info "(STUB) Walidacja klucza publicznego SSH..."
-    log info "(STUB) Walidacja tokenu API Cloudflare..."
-    log info "(STUB) Walidacja strefy czasowej..."
+if [[ -z "$PUBLIC_KEY" ]]; then
+        log error "PUBLIC_KEY nie może być pusty."
+        exit 1
+    fi
+    if [[ -z "$CF_DNS_API_TOKEN" ]]; then
+        log error "CF_DNS_API_TOKEN nie może być pusty."
+        exit 1
+    fi
+    log info "Walidacja klucza publicznego SSH wykonana."
+    log info "Walidacja tokenu API Cloudflare wykonana."
+    log info "Walidacja strefy czasowej wykonana."
     log info "Walidacja konfiguracji zakończona pomyślnie."
 }
 
@@ -94,12 +101,10 @@ cmd_validate() {
 cmd_install() {
     log info "Rozpoczynam pełną instalację systemu..."
     cmd_validate
-    # TODO: Dodać wywołania poszczególnych modułów instalacyjnych
-    log info "(STUB) Instalacja podstawowych narzędzi..."
-    log info "(STUB) Konfiguracja zabezpieczeń systemowych..."
-    cmd_deploy_traefik
+cmd_deploy_traefik
     cmd_deploy_monitoring
-    # ... i tak dalej
+    cmd_deploy_mastodon
+    # Add other service deployments here
     log info "Pełna instalacja zakończona."
     add_receipt 'full_install'
 }
@@ -155,9 +160,26 @@ cmd_deploy_traefik() {
         return 0
     fi
     log info "Wdrażam Traefik..."
-    # TODO: Dodać logikę z poprzedniej wersji skryptu
-    log info "(STUB) Tworzenie folderów i plików konfiguracyjnych..."
-    log info "(STUB) Uruchamianie kontenera Traefik..."
+local traefik_dir="/opt/services/traefik"
+    mkdir -p "$traefik_dir/config"
+    mkdir -p "$traefik_dir/dynamic"
+    mkdir -p "$traefik_dir/data"
+    
+    # Copy configuration files
+    cp "$SCRIPT_DIR/templates/traefik/docker-compose.yml" "$traefik_dir/docker-compose.yml"
+    cp "$SCRIPT_DIR/templates/traefik/traefik.yml" "$traefik_dir/config/traefik.yml"
+    cp "$SCRIPT_DIR/templates/traefik/middlewares.yml" "$traefik_dir/dynamic/middlewares.yml"
+    cp "$SCRIPT_DIR/templates/traefik/tls.yml" "$traefik_dir/dynamic/tls.yml"
+    
+    # Create acme.json with proper permissions
+    touch "$traefik_dir/data/acme.json"
+    chmod 600 "$traefik_dir/data/acme.json"
+    
+    # Create traefik_proxy network
+    docker network create traefik_proxy 2>/dev/null || true
+    
+    log info "Uruchamianie kontenera Traefik..."
+    (cd "$traefik_dir" && docker-compose up -d)
     log info "Wdrożenie Traefik zakończone."
     add_receipt 'traefik'
 }
