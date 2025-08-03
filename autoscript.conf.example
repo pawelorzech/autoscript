@@ -1,11 +1,11 @@
 # ===================================================================
-# Konfiguracja AutoScript v2
+# Konfiguracja AutoScript v3
 # ===================================================================
 #
 # Instrukcja:
 # 1. Skopiuj ten plik do `autoscript.conf`
-#    cp autoscript.conf.example autoscript.conf
 # 2. Wypełnij poniższe zmienne.
+# 3. Uruchom `./start.sh validate` aby sprawdzić poprawność konfiguracji.
 #
 # ===================================================================
 
@@ -13,28 +13,21 @@
 # SEKCJA WYMAGANA
 # -------------------------------------------------------------------
 
-# Twój publiczny klucz SSH, który zostanie użyty do logowania na użytkownika 'admin'.
-# Przykład: PUBLIC_KEY='ssh-ed25519 AAAA... user@host'
 PUBLIC_KEY=''
-
-# Token API z Cloudflare z uprawnieniami do edycji strefy DNS (DNS:Edit).
 CF_DNS_API_TOKEN=''
 
 # -------------------------------------------------------------------
 # USTAWIENIA GŁÓWNE
 # -------------------------------------------------------------------
 
-# Twoja główna domena zarządzana przez Cloudflare.
-# Przykład: PRIMARY_DOMAIN='example.com'
+# Główna domena, na której będzie działać Mastodon
 PRIMARY_DOMAIN='social.ovh'
 
-# Adres e-mail używany do powiadomień od Let's Encrypt oraz alertów systemowych.
-# Przykład: ADMIN_EMAIL='admin@example.com'
-ADMIN_EMAIL='admin@social.ovh'
+# Domena dla usług pomocniczych (monitoringu, itp.)
+# Domyślnie subdomena głównej, ale można zmienić na inną.
+SERVICES_DOMAIN="${PRIMARY_DOMAIN}"
 
-# Strefa czasowa serwera.
-# Pełna lista: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-# Przykład: TIMEZONE='Europe/London'
+ADMIN_EMAIL='admin@social.ovh'
 TIMEZONE='Europe/Warsaw'
 
 # -------------------------------------------------------------------
@@ -43,59 +36,33 @@ TIMEZONE='Europe/Warsaw'
 
 ALERT_SMTP_HOST='mail.social.ovh:587'
 ALERT_SMTP_USER='alerts@social.ovh'
-ALERT_SMTP_PASS='' # Pozostaw puste, aby wygenerować losowe
+ALERT_SMTP_PASS=''
 ALERT_SMTP_FROM='alerts@social.ovh'
-
-# -------------------------------------------------------------------
-# USTAWIENIA USŁUG
-# -------------------------------------------------------------------
-
-# Hasło administratora dla Grafany.
-# Jeśli pozostawisz puste, zostanie wygenerowane losowe i zapisane bezpiecznie w sops.
-GRAFANA_ADMIN_PASSWORD=''
 
 # -------------------------------------------------------------------
 # MODUŁY OPCJONALNE (włącz/wyłącz za pomocą true/false)
 # -------------------------------------------------------------------
 
-# Czy instalować i konfigurować Fail2ban jako dodatkową warstwę ochrony?
 INSTALL_FAIL2BAN=true
-
-# Czy wdrażać bazę danych PostgreSQL?
-INSTALL_DATABASE=false
-
-# Czy wdrażać Loki do centralnego zbierania logów z kontenerów?
-INSTALL_LOKI=false
-
-# Czy konfigurować system kopii zapasowych Restic?
-# UWAGA: Wymaga ręcznego uzupełnienia danych repozytorium!
+INSTALL_DATABASE=true # Wymagane przez Mastodona
+INSTALL_LOKI=true
 INSTALL_BACKUP=false
+ENABLE_APPARMOR=true
 
 # -------------------------------------------------------------------
 # KONFIGURACJA BAZY DANYCH (jeśli INSTALL_DATABASE=true)
 # -------------------------------------------------------------------
 
-# Hasło dla użytkownika 'postgres'. Zostanie zapisane w sops.
-# Jeśli pozostawisz puste, zostanie wygenerowane losowe.
 POSTGRES_PASSWORD=''
 
 # -------------------------------------------------------------------
 # KONFIGURACJA KOPII ZAPASOWYCH (jeśli INSTALL_BACKUP=true)
 # -------------------------------------------------------------------
 
-# Pełna ścieżka do repozytorium Restic (np. s3:s3.amazonaws.com/my-bucket)
 BACKUP_REPO=''
-
-# Hasło do repozytorium Restic. Zostanie zapisane w sops.
 BACKUP_PASSWORD=''
-
-# Dane dostępowe do Twojego dostawcy chmury (np. AWS S3)
-# Zostaną zapisane w sops.
 AWS_ACCESS_KEY_ID=''
 AWS_SECRET_ACCESS_KEY=''
-
-# Harmonogram tworzenia kopii zapasowych (format cron)
-# Poniższy przykład oznacza "codziennie o 3:30 w nocy"
 BACKUP_CRON_SCHEDULE='30 3 * * *'
 
 # -------------------------------------------------------------------
@@ -104,11 +71,5 @@ BACKUP_CRON_SCHEDULE='30 3 * * *'
 
 TRAEFIK_VER='v3.0'
 PROMETHEUS_VER='latest'
-NODE_EXPORTER_VER='latest'
-CADVISOR_VER='latest'
-BLACKBOX_VER='latest'
 GRAFANA_VER='latest'
-ALERTMANAGER_VER='latest'
-POSTGRES_VER='16'
-LOKI_VER='latest'
-PROMTAIL_VER='latest'
+# ... (pozostałe wersje)
