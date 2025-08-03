@@ -5,6 +5,9 @@
   <a href="#7-licencja">
     <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
   </a>
+  <a href="README_en.md">
+    <img src="https://img.shields.io/badge/lang-EN-blue.svg" alt="English">
+  </a>
 </p>
 
 <h1 align="center">AutoScript: Zintegrowana Platforma Serwerowa</h1>
