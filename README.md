@@ -46,7 +46,7 @@ apt install -y git
 Będąc w katalogu domowym roota (`/root`), sklonuj ten projekt:
 
 ```bash
-git clone https://github.com/twoja-nazwa-uzytkownika/autoscript.git
+git clone https://github.com/pawelorzech/autoscript.git
 cd autoscript
 ```
 
