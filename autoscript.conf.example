@@ -1,0 +1,81 @@
+# ===================================================================
+# Konfiguracja AutoScript
+# ===================================================================
+#
+# Instrukcja:
+# 1. Skopiuj ten plik do `autoscript.conf`
+#    cp autoscript.conf.example autoscript.conf
+# 2. Wypełnij poniższe zmienne.
+#
+# ===================================================================
+
+# -------------------------------------------------------------------
+# SEKCJA WYMAGANA
+# -------------------------------------------------------------------
+
+# Twój publiczny klucz SSH, który zostanie użyty do logowania na użytkownika 'admin'.
+# Przykład: PUBLIC_KEY='ssh-ed25519 AAAA... user@host'
+PUBLIC_KEY=''
+
+# Token API z Cloudflare z uprawnieniami do edycji strefy DNS (DNS:Edit).
+CF_DNS_API_TOKEN=''
+
+# -------------------------------------------------------------------
+# USTAWIENIA GŁÓWNE
+# -------------------------------------------------------------------
+
+# Twoja główna domena zarządzana przez Cloudflare.
+# Przykład: PRIMARY_DOMAIN='example.com'
+PRIMARY_DOMAIN='orzech.me'
+
+# Adres e-mail używany do powiadomień od Let's Encrypt oraz alertów systemowych.
+# Przykład: ADMIN_EMAIL='admin@example.com'
+ADMIN_EMAIL='admin@orzech.me'
+
+# Strefa czasowa serwera.
+# Pełna lista: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+# Przykład: TIMEZONE='Europe/London'
+TIMEZONE='Europe/Warsaw'
+
+# -------------------------------------------------------------------
+# USTAWIENIA POWIADOMIEŃ (SMTP)
+# -------------------------------------------------------------------
+# Ta sekcja konfiguruje serwer e-mail do wysyłania alertów z monitoringu.
+
+# Adres hosta i port serwera SMTP.
+# Przykład: ALERT_SMTP_HOST='smtp.example.com:587'
+ALERT_SMTP_HOST='mail.drap.ovh:587'
+
+# Nazwa użytkownika do logowania SMTP.
+# Przykład: ALERT_SMTP_USER='alerts@example.com'
+ALERT_SMTP_USER='alerts@drap.ovh'
+
+# Hasło do logowania SMTP. 
+# Jeśli pozostawisz puste, zostanie wygenerowane losowe i zapisane bezpiecznie w sops.
+ALERT_SMTP_PASS=''
+
+# Adres e-mail, z którego będą wysyłane alerty (pole 'From').
+# Przykład: ALERT_SMTP_FROM='server-alerts@example.com'
+ALERT_SMTP_FROM='alerts@drap.ovh'
+
+# -------------------------------------------------------------------
+# USTAWIENIA USŁUG
+# -------------------------------------------------------------------
+
+# Hasło administratora dla Grafany.
+# Jeśli pozostawisz puste, zostanie wygenerowane losowe i zapisane bezpiecznie w sops.
+GRAFANA_ADMIN_PASSWORD=''
+
+# -------------------------------------------------------------------
+# WERSJE OBRAZÓW DOCKER
+# -------------------------------------------------------------------
+# Dobrą praktyką jest używanie konkretnych wersji oprogramowania dla stabilności.
+# Używaj 'latest' z rozwagą.
+
+TRAEFIK_VER='v3.0'
+PROMETHEUS_VER='latest'
+NODE_EXPORTER_VER='latest'
+CADVISOR_VER='latest'
+BLACKBOX_VER='latest'
+GRAFANA_VER='latest'
+ALERTMANAGER_VER='latest'

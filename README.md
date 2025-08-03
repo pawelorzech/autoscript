@@ -33,57 +33,38 @@ Zanim uruchomisz skrypt, upewnij się, że posiadasz:
 1.  **Nowy serwer** z systemem operacyjnym Debian lub Ubuntu.
 2.  **Dostęp do konta `root`** na tym serwerze.
 3.  **Domenę internetową** zarządzaną przez **Cloudflare**.
-4.  **Klucz API Cloudflare** z uprawnieniami do edycji strefy DNS (`DNS:Edit`). Możesz go wygenerować w panelu Cloudflare: `My Profile > API Tokens > Create Token`.
-5.  **Publiczny klucz SSH** (np. zawartość pliku `~/.ssh/id_ed25519.pub`), który zostanie użyty do autoryzacji nowego użytkownika `admin`.
+4.  **Klucz API Cloudflare** z uprawnieniami do edycji strefy DNS (`DNS:Edit`).
+5.  **Publiczny klucz SSH** (np. zawartość pliku `~/.ssh/id_ed25519.pub`).
 
 ## 4. Konfiguracja
 
-Skrypt jest konfigurowany za pomocą zmiennych środowiskowych.
+Konfiguracja skryptu odbywa się w całości poprzez plik `autoscript.conf`.
 
-### Zmienne Wymagane
+1.  **Utwórz plik konfiguracyjny:**
+    Skopiuj szablon `autoscript.conf.example` do nowego pliku o nazwie `autoscript.conf`.
+    ```bash
+    cp autoscript.conf.example autoscript.conf
+    ```
 
-Musisz ustawić te zmienne przed uruchomieniem skryptu:
+2.  **Wypełnij plik `autoscript.conf`:**
+    Otwórz plik `autoscript.conf` w edytorze tekstu i uzupełnij wszystkie zmienne zgodnie z komentarzami. Szczególną uwagę zwróć na sekcje `WYMAGANE`.
 
-- `PUBLIC_KEY`: Twój publiczny klucz SSH.
-  ```bash
-  # Przykład
-  export PUBLIC_KEY='ssh-ed25519 AAAA... twoja_nazwa@twoj_komputer'
-  ```
-- `CF_DNS_API_TOKEN`: Twój token API od Cloudflare.
-  ```bash
-  # Przykład
-  export CF_DNS_API_TOKEN='AbCdEfGhIjKlMnOpQrStUvWxYz1234567890'
-  ```
-
-### Zmienne Opcjonalne
-
-Możesz dostosować działanie skryptu, ustawiając poniższe zmienne (mają one wartości domyślne):
-
-- `PRIMARY_DOMAIN`: Twoja główna domena (np. `mojadomena.com`). Domyślnie: `orzech.me`.
-- `ADMIN_EMAIL`: Adres e-mail do powiadomień (np. od Let's Encrypt, Alertmanager). Domyślnie: `admin@orzech.me`.
-- `TIMEZONE`: Strefa czasowa serwera. Domyślnie: `Europe/Warsaw`.
-- `ALERT_SMTP_...`: Zmienne do konfiguracji serwera SMTP do wysyłania alertów.
-- `*_VER`: Wersje obrazów Docker (np. `TRAEFIK_VER`). Pozwala na przypięcie konkretnych wersji oprogramowania.
+    - `PUBLIC_KEY`: Twój publiczny klucz SSH.
+    - `CF_DNS_API_TOKEN`: Twój token API od Cloudflare.
+    - `PRIMARY_DOMAIN`: Twoja główna domena.
+    - `ADMIN_EMAIL`: Twój adres e-mail.
+    - ...i inne ustawienia, takie jak dane do serwera SMTP czy wersje oprogramowania.
 
 ## 5. Użycie
 
-1.  Sklonuj to repozytorium na swój lokalny komputer lub bezpośrednio na serwer.
+1.  Sklonuj to repozytorium na swój serwer.
 2.  Przejdź do folderu projektu: `cd autoscript`.
-3.  Ustaw **wymagane** zmienne środowiskowe (patrz punkt 4).
-    ```bash
-    export PUBLIC_KEY='...'
-    export CF_DNS_API_TOKEN='...'
-    ```
-4.  Opcjonalnie ustaw inne zmienne, aby nadpisać wartości domyślne.
-    ```bash
-    export PRIMARY_DOMAIN='twojadomena.pl'
-    export ADMIN_EMAIL='admin@twojadomena.pl'
-    ```
-5.  Uruchom skrypt z uprawnieniami `root`.
+3.  Utwórz i wypełnij plik konfiguracyjny `autoscript.conf` (zgodnie z punktem 4).
+4.  Uruchom skrypt z uprawnieniami `root`.
     ```bash
     sudo ./start.sh
     ```
-6.  Skrypt wykona wszystkie kroki automatycznie. Proces może potrwać kilka minut.
+5.  Skrypt automatycznie wczyta konfigurację z pliku i rozpocznie instalację.
 
 ## 6. Co robić po zakończeniu skryptu?
 
