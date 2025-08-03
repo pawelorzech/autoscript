@@ -1,5 +1,5 @@
 # ===================================================================
-# Konfiguracja AutoScript
+# Konfiguracja AutoScript v2
 # ===================================================================
 #
 # Instrukcja:
@@ -40,22 +40,10 @@ TIMEZONE='Europe/Warsaw'
 # -------------------------------------------------------------------
 # USTAWIENIA POWIADOMIEŃ (SMTP)
 # -------------------------------------------------------------------
-# Ta sekcja konfiguruje serwer e-mail do wysyłania alertów z monitoringu.
 
-# Adres hosta i port serwera SMTP.
-# Przykład: ALERT_SMTP_HOST='smtp.example.com:587'
 ALERT_SMTP_HOST='mail.drap.ovh:587'
-
-# Nazwa użytkownika do logowania SMTP.
-# Przykład: ALERT_SMTP_USER='alerts@example.com'
 ALERT_SMTP_USER='alerts@drap.ovh'
-
-# Hasło do logowania SMTP. 
-# Jeśli pozostawisz puste, zostanie wygenerowane losowe i zapisane bezpiecznie w sops.
-ALERT_SMTP_PASS=''
-
-# Adres e-mail, z którego będą wysyłane alerty (pole 'From').
-# Przykład: ALERT_SMTP_FROM='server-alerts@example.com'
+ALERT_SMTP_PASS='' # Pozostaw puste, aby wygenerować losowe
 ALERT_SMTP_FROM='alerts@drap.ovh'
 
 # -------------------------------------------------------------------
@@ -67,10 +55,52 @@ ALERT_SMTP_FROM='alerts@drap.ovh'
 GRAFANA_ADMIN_PASSWORD=''
 
 # -------------------------------------------------------------------
+# MODUŁY OPCJONALNE (włącz/wyłącz za pomocą true/false)
+# -------------------------------------------------------------------
+
+# Czy instalować i konfigurować Fail2ban jako dodatkową warstwę ochrony?
+INSTALL_FAIL2BAN=true
+
+# Czy wdrażać bazę danych PostgreSQL?
+INSTALL_DATABASE=false
+
+# Czy wdrażać Loki do centralnego zbierania logów z kontenerów?
+INSTALL_LOKI=false
+
+# Czy konfigurować system kopii zapasowych Restic?
+# UWAGA: Wymaga ręcznego uzupełnienia danych repozytorium!
+INSTALL_BACKUP=false
+
+# -------------------------------------------------------------------
+# KONFIGURACJA BAZY DANYCH (jeśli INSTALL_DATABASE=true)
+# -------------------------------------------------------------------
+
+# Hasło dla użytkownika 'postgres'. Zostanie zapisane w sops.
+# Jeśli pozostawisz puste, zostanie wygenerowane losowe.
+POSTGRES_PASSWORD=''
+
+# -------------------------------------------------------------------
+# KONFIGURACJA KOPII ZAPASOWYCH (jeśli INSTALL_BACKUP=true)
+# -------------------------------------------------------------------
+
+# Pełna ścieżka do repozytorium Restic (np. s3:s3.amazonaws.com/my-bucket)
+BACKUP_REPO=''
+
+# Hasło do repozytorium Restic. Zostanie zapisane w sops.
+BACKUP_PASSWORD=''
+
+# Dane dostępowe do Twojego dostawcy chmury (np. AWS S3)
+# Zostaną zapisane w sops.
+AWS_ACCESS_KEY_ID=''
+AWS_SECRET_ACCESS_KEY=''
+
+# Harmonogram tworzenia kopii zapasowych (format cron)
+# Poniższy przykład oznacza "codziennie o 3:30 w nocy"
+BACKUP_CRON_SCHEDULE='30 3 * * *'
+
+# -------------------------------------------------------------------
 # WERSJE OBRAZÓW DOCKER
 # -------------------------------------------------------------------
-# Dobrą praktyką jest używanie konkretnych wersji oprogramowania dla stabilności.
-# Używaj 'latest' z rozwagą.
 
 TRAEFIK_VER='v3.0'
 PROMETHEUS_VER='latest'
@@ -79,3 +109,6 @@ CADVISOR_VER='latest'
 BLACKBOX_VER='latest'
 GRAFANA_VER='latest'
 ALERTMANAGER_VER='latest'
+POSTGRES_VER='16'
+LOKI_VER='latest'
+PROMTAIL_VER='latest'

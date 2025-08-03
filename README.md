@@ -1,129 +1,81 @@
-# AutoScript - Zautomatyzowana Konfiguracja Serwera
+# AutoScript v2 - Zautomatyzowana Konfiguracja i Zarządzanie Serwerem
 
 ## 1. Przegląd
 
-Ten projekt zawiera kompleksowy skrypt `start.sh`, który automatyzuje proces konfiguracji i zabezpieczania nowego serwera opartego na systemie Debian (lub jego pochodnych, jak Ubuntu). Skrypt instaluje niezbędne oprogramowanie, wzmacnia zabezpieczenia systemu (hardening) i wdraża środowisko aplikacyjne oparte na kontenerach Docker.
-
-Jest to idealne rozwiązanie do szybkiego przygotowania serwera deweloperskiego lub produkcyjnego, z gotowym do użycia reverse proxy (Traefik) oraz pełnym stosem monitoringu (Prometheus, Grafana).
+AutoScript to potężne narzędzie do automatyzacji pełnego cyklu życia serwera opartego o system Debian/Ubuntu. Skrypt przekształca "surowy" serwer w gotowe do pracy, zabezpieczone i monitorowane środowisko produkcyjne. Dzięki modularnej budowie, możesz używać go zarówno do wstępnej konfiguracji, jak i do późniejszego zarządzania poszczególnymi komponentami.
 
 ## 2. Główne Funkcje
 
-- **Automatyzacja:** Uruchom jeden skrypt, aby w pełni przygotować serwer.
-- **Zabezpieczenia (Hardening):**
-  - Konfiguracja firewalla `UFW`.
-  - Wzmocnienie zabezpieczeń SSH (zmiana portu, blokada logowania roota, autoryzacja kluczem).
-  - Tworzenie dedykowanego użytkownika `admin` z uprawnieniami `sudo` i weryfikacją dwuetapową (TOTP).
-  - Instalacja i konfiguracja `CrowdSec` (system zapobiegania włamaniom).
-  - Wdrożenie podstawowych zabezpieczeń jądra systemu.
-- **Środowisko Docker:**
-  - Instalacja i konfiguracja Docker Engine z najlepszymi praktykami (m.in. `userns-remap`).
-  - Wdrożenie `Traefik` jako reverse proxy z automatycznym generowaniem certyfikatów SSL/TLS od Let's Encrypt (przy użyciu Cloudflare DNS).
-- **Monitoring i Alerty:**
-  - Wdrożenie `Prometheus` do zbierania metryk.
-  - Wdrożenie `Grafana` do wizualizacji danych z gotową konfiguracją.
-  - Wdrożenie `Alertmanager` do wysyłania powiadomień o anomaliach (e-mailem).
-  - Wdrożenie eksporterów metryk (`node-exporter`, `cAdvisor`, `blackbox-exporter`).
-- **Zarządzanie Sekretami:**
-  - Bezpieczne zarządzanie hasłami i kluczami API przy użyciu `sops` i `age`, bez przechowywania ich w formie jawnego tekstu.
+- **Modularność**: Uruchamiaj tylko te części skryptu, których potrzebujesz (`install`, `deploy_monitoring`, `uninstall` itp.).
+- **Automatyzacja i Idempotentność**: Skrypt można bezpiecznie uruchamiać wielokrotnie - zawsze doprowadzi system do pożądanego stanu.
+- **Hardening (Wzmacnianie Zabezpieczeń)**: Kompleksowe zabezpieczenie serwera, w tym firewall, niestandardowy port SSH, blokada roota, uwierzytelnianie kluczem, `CrowdSec` i opcjonalnie `Fail2ban`.
+- **Środowisko Docker**: Wdrożenie Dockera z Traefikiem jako reverse proxy i automatycznymi certyfikatami SSL.
+- **Monitoring i Alerty**: Pełny stos monitoringu (Prometheus, Grafana, Alertmanager) z prekonfigurowanymi regułami.
+- **Zarządzanie Sekretami**: Bezpieczne przechowywanie haseł i kluczy API dzięki `sops`.
+- **Funkcje Opcjonalne**: Możliwość łatwego doinstalowania bazy danych PostgreSQL, systemu logów Loki czy kopii zapasowych Restic.
+- **Czysta Deinstalacja**: Możliwość wycofania wszystkich zmian za pomocą jednej komendy.
 
-## 3. Wymagania Wstępne
-
-Zanim uruchomisz skrypt, upewnij się, że posiadasz:
-
-1.  **Nowy serwer** z systemem operacyjnym Debian lub Ubuntu.
-2.  **Dostęp do konta `root`** na tym serwerze.
-3.  **Domenę internetową** zarządzaną przez **Cloudflare**.
-4.  **Klucz API Cloudflare** z uprawnieniami do edycji strefy DNS (`DNS:Edit`).
-5.  **Publiczny klucz SSH** (np. zawartość pliku `~/.ssh/id_ed25519.pub`).
-
-## 4. Konfiguracja
-
-Konfiguracja skryptu odbywa się w całości poprzez plik `autoscript.conf`.
-
-1.  **Utwórz plik konfiguracyjny:**
-    Skopiuj szablon `autoscript.conf.example` do nowego pliku o nazwie `autoscript.conf`.
-    ```bash
-    cp autoscript.conf.example autoscript.conf
-    ```
-
-2.  **Wypełnij plik `autoscript.conf`:**
-    Otwórz plik `autoscript.conf` w edytorze tekstu i uzupełnij wszystkie zmienne zgodnie z komentarzami. Szczególną uwagę zwróć na sekcje `WYMAGANE`.
-
-    - `PUBLIC_KEY`: Twój publiczny klucz SSH.
-    - `CF_DNS_API_TOKEN`: Twój token API od Cloudflare.
-    - `PRIMARY_DOMAIN`: Twoja główna domena.
-    - `ADMIN_EMAIL`: Twój adres e-mail.
-    - ...i inne ustawienia, takie jak dane do serwera SMTP czy wersje oprogramowania.
-
-## 5. Użycie
-
-1.  Sklonuj to repozytorium na swój serwer.
-2.  Przejdź do folderu projektu: `cd autoscript`.
-3.  Utwórz i wypełnij plik konfiguracyjny `autoscript.conf` (zgodnie z punktem 4).
-4.  Uruchom skrypt z uprawnieniami `root`.
-    ```bash
-    sudo ./start.sh
-    ```
-5.  Skrypt automatycznie wczyta konfigurację z pliku i rozpocznie instalację.
-
-## 6. Co robić po zakończeniu skryptu?
-
-Po pomyślnym wykonaniu skryptu, twoje środowisko jest gotowe, ale musisz wiedzieć o kilku ważnych zmianach:
-
-1.  **Nowy Port SSH:** Port SSH został zmieniony na losowy numer z zakresu 10000-65535. **Znajdziesz go w pliku `/root/ssh_port.txt`**.
-    ```bash
-    # Zaloguj się na serwerze jako root i wykonaj:
-    cat /root/ssh_port.txt
-    ```
-2.  **Logowanie na serwer:**
-    - Logowanie na konto `root` jest **zablokowane**.
-    - Możesz zalogować się tylko jako użytkownik `admin` przy użyciu podanego klucza SSH i nowego portu.
-    ```bash
-    ssh admin@<IP_SERWERA> -p <NOWY_PORT_SSH>
-    ```
-3.  **Konfiguracja Weryfikacji Dwuetapowej (TOTP):**
-    - Przy pierwszej próbie użycia `sudo` przez użytkownika `admin` (np. `sudo ls /root`), zostaniesz poproszony o skonfigurowanie TOTP.
-    - W terminalu wyświetli się **kod QR**. Zeskanuj go aplikacją do uwierzytelniania (np. Google Authenticator, Authy).
-    - Zapisz wyświetlone kody zapasowe w bezpiecznym miejscu!
-4.  **Dostęp do Usług:**
-    Wdrożone usługi będą dostępne pod subdomenami Twojej `PRIMARY_DOMAIN`:
-    - **Prometheus:** `https://prometheus.twojadomena.pl`
-    - **Grafana:** `https://grafana.twojadomena.pl`
-    - **Alertmanager:** `https://alertmanager.twojadomena.pl`
-    - **Traefik Dashboard:** Domyślnie nie jest publicznie dostępny. Aby go udostępnić, musiałbyś dodać odpowiednią regułę routingu w plikach konfiguracyjnych Traefik.
-
-5.  **Hasła i Sekrety:**
-    - Hasło administratora Grafany jest generowane automatycznie.
-    - Wszystkie sekrety są zaszyfrowane w folderze `/opt/services/` przy użyciu `sops`. Aby je odczytać lub edytować, musisz użyć `sops` bezpośrednio na serwerze, np.:
-      ```bash
-      # To polecenie odszyfruje i wyświetli plik w edytorze
-      sudo sops /opt/services/monitoring/secrets/monitoring.env.sops
-      ```
-
-## 7. Szczegółowy Opis Działania Skryptu
-
-Skrypt `start.sh` składa się z szeregu funkcji, które są wywoływane po kolei.
-
-- `ensure_root`: Sprawdza, czy skrypt jest uruchamiany z uprawnieniami `root`.
-- `install_node_and_gemini`: Instaluje Node.js oraz Gemini CLI.
-- `install_base_tools`: Instaluje podstawowe pakiety systemowe, takie jak `ufw` (firewall), `jq` (przetwarzanie JSON), `sops` (zarządzanie sekretami), `age` (szyfrowanie), `aide` (monitorowanie integralności plików) oraz `CrowdSec` (ochrona przed atakami).
-- `bootstrap_sops`: Inicjalizuje konfigurację `sops` z kluczem `age`, który będzie używany do szyfrowania wszystkich sekretów.
-- `create_admin_user`: Tworzy nowego użytkownika `admin`, dodaje go do grupy `sudo`, konfiguruje logowanie za pomocą klucza SSH i wymusza użycie weryfikacji dwuetapowej (TOTP) przy użyciu `sudo`.
-- `harden_ssh`: Zabezpiecza serwer SSH: generuje nowe klucze hosta, blokuje logowanie na konto `root` i za pomocą hasła, zmienia domyślny port na losowy i ogranicza dostęp tylko do autoryzowanych grup.
-- `configure_firewall`: Konfiguruje zaporę sieciową `UFW`, otwierając tylko niezbędne porty (nowy port SSH, HTTP, HTTPS, poczta, etc.) i blokując resztę. Dodaje również reguły chroniące kontenery Docker.
-- `system_baseline`: Wprowadza zmiany w konfiguracji jądra systemowego w celu poprawy bezpieczeństwa i wydajności. Konfiguruje trwałe logi `journald` oraz automatyczne aktualizacje (`unattended-upgrades`).
-- `install_docker`: Instaluje silnik Docker oraz wtyczkę `docker-compose`. Konfiguruje go zgodnie z zaleceniami bezpieczeństwa, m.in. włączając izolację przestrzeni nazw użytkowników (`userns-remap`).
-- `prepare_secrets`: Przygotowuje wszystkie potrzebne sekrety (token Cloudflare, hasło do Grafany, hasło do SMTP) i szyfruje je za pomocą `sops`, aby nie były przechowywane na dysku jako jawny tekst.
-- `deploy_traefik`: Wdraża kontener z Traefikiem. Konfiguruje go do obsługi ruchu HTTP/HTTPS, automatycznego przekierowywania na HTTPS oraz zamawiania certyfikatów SSL od Let's Encrypt.
-- `deploy_monitoring`: Wdraża pełny stos monitoringu, w tym:
-  - **Prometheus:** do zbierania danych.
-  - **Grafana:** do ich wizualizacji.
-  - **Alertmanager:** do wysyłania alertów.
-  - **Exportery:** `node-exporter` (metryki systemu), `cAdvisor` (metryki kontenerów), `blackbox-exporter` (monitorowanie dostępności stron).
-
-## 8. Plik `.gitattributes`
+## 3. Struktura Projektu
 
 ```
-* text=auto
+autoscript/
+├── templates/           # Szablony plików konfiguracyjnych
+│   ├── monitoring/
+│   └── traefik/
+├── autoscript.conf.example # Przykład pliku konfiguracyjnego
+├── CHANGELOG.md         # Dziennik zmian
+├── README.md            # Ta dokumentacja
+└── start.sh             # Główny skrypt wykonawczy
 ```
-Ta linia w pliku `.gitattributes` jest ważna dla spójności projektu. Nakazuje ona systemowi Git automatyczne zarządzanie znakami końca linii w plikach tekstowych. Dzięki temu unikniesz problemów, jeśli będziesz pracować nad projektem na różnych systemach operacyjnych (np. Windows i Linux), które używają różnych standardów dla końca linii.
+
+## 4. Użycie
+
+### Krok 1: Konfiguracja
+
+1.  Sklonuj repozytorium na serwer: `git clone ...`
+2.  Przejdź do folderu: `cd autoscript`
+3.  Stwórz plik konfiguracyjny z szablonu: `cp autoscript.conf.example autoscript.conf`
+4.  Otwórz `autoscript.conf` i **dokładnie wypełnij wszystkie zmienne**, zwłaszcza te w sekcji `WYMAGANE`.
+
+### Krok 2: Uruchomienie Skryptu
+
+Skryptem zarządza się za pomocą komend. Wszystkie komendy należy wykonywać z uprawnieniami `root` (np. `sudo ./start.sh <komenda>`).
+
+**Główne Komendy:**
+
+- `sudo ./start.sh install`
+  **Pełna, pierwsza instalacja.** Wykonuje wszystkie niezbędne kroki: instaluje pakiety, konfiguruje zabezpieczenia, wdraża Dockera, Traefika i stos monitoringu. Uruchom tę komendę na nowym serwerze.
+
+- `sudo ./start.sh uninstall`
+  **Pełna deinstalacja.** Zatrzymuje i usuwa wszystkie usługi, kontenery, wolumeny, a także odinstalowuje pakiety i wycofuje zmiany konfiguracyjne. **Używaj z ostrożnością!**
+
+**Komendy do Zarządzania Modułami:**
+
+Możesz zarządzać poszczególnymi częściami systemu niezależnie.
+
+- `sudo ./start.sh deploy_traefik`
+- `sudo ./start.sh deploy_monitoring`
+- `sudo ./start.sh deploy_database` (jeśli włączone w konfigu)
+
+**Komendy Pomocnicze:**
+
+- `sudo ./start.sh reboot` - Bezpieczny restart serwera.
+- `sudo ./start.sh update` - Aktualizacja pakietów systemowych.
+
+## 5. Opis Modułów Opcjonalnych
+
+Możesz włączyć je w pliku `autoscript.conf`.
+
+- **Fail2ban**: Dodatkowa ochrona, która analizuje logi i blokuje adresy IP wykazujące złośliwą aktywność (np. próby logowania brute-force).
+- **PostgreSQL**: Wdraża kontener z popularną bazą danych. Hasło jest zarządzane przez `sops`.
+- **Loki**: System do agregacji logów z Twoich kontenerów. Umożliwia ich wygodne przeszukiwanie w Grafanie.
+- **Restic Backup**: Instaluje i konfiguruje `restic` do tworzenia regularnych, szyfrowanych kopii zapasowych do chmury (np. AWS S3, Backblaze B2). **Wymaga dodatkowej konfiguracji po stronie dostawcy chmury!**
+
+## 6. Co robić po instalacji?
+
+Po zakończeniu komendy `install`:
+
+1.  **Nowy Port SSH:** Został zmieniony na losowy. Znajdziesz go w pliku `/root/ssh_port.txt`.
+2.  **Logowanie**: Logowanie na `root` jest zablokowane. Użyj użytkownika `admin` z Twoim kluczem SSH i nowym portem: `ssh admin@<IP> -p <PORT>`.
+3.  **TOTP (2FA)**: Przy pierwszym użyciu `sudo` zostaniesz poproszony o skonfigurowanie aplikacji do uwierzytelniania (np. Google Authenticator).
+4.  **Dostęp do usług**: Usługi będą dostępne pod subdomenami Twojej domeny (np. `https://grafana.twojadomena.pl`).
