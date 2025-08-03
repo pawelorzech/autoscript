@@ -68,9 +68,27 @@ AutoScript jest w pełni zintegrowany z `Restic` i `Backblaze B2`, aby zapewnić
 - **Automatyzacja**: Po poprawnej konfiguracji, skrypt automatycznie tworzy zadanie `cron`, które codziennie wykonuje szyfrowaną kopię zapasową całego folderu `/opt/services` (zawierającego wszystkie dane aplikacji) do Twojego bucketa B2.
 - **Odtwarzanie**: W razie awarii, możesz użyć komendy `sudo ./start.sh backup:restore <ID_MIGAWKI>`, aby przywrócić dane.
 
-## 6. Aspekty Bezpieczeństwa
+## 6. Aspekty Bezpieczeństwa: Architektura "Secure by Default"
 
-(Sekcja pozostaje bez zmian, podkreślając te same, solidne fundamenty bezpieczeństwa).
+AutoScript nie traktuje bezpieczeństwa jako opcji, ale jako fundamentalny element wbudowany w każdy aspekt platformy. Oto kluczowe mechanizmy obronne, które są wdrażane automatycznie:
+
+### Poziom Systemu Operacyjnego
+
+- **Minimalizacja Powierzchni Ataku**: Skrypt instaluje tylko niezbędne pakiety. Nie ma zbędnego oprogramowania, które mogłoby stanowić potencjalne zagrożenie.
+- **Wzmocnione Uwierzytelnianie**: Logowanie hasłem do SSH jest całkowicie wyłączone. Dostęp jest możliwy tylko za pomocą kluczy kryptograficznych. Dodatkowo, dostęp do uprawnień `root` (przez `sudo`) jest chroniony przez uwierzytelnianie dwuetapowe (TOTP).
+- **Ograniczenie Dostępu**: Logowanie na konto `root` jest zablokowane. Dedykowany użytkownik `admin` ma ograniczone uprawnienia, które może podnieść tylko za pomocą `sudo` (z weryfikacją 2FA).
+- **Firewall (UFW)**: Zapora sieciowa jest skonfigurowana w trybie "blokuj wszystko, zezwalaj na wybrane". Otwierane są tylko porty niezbędne do działania wdrożonych usług.
+
+### Poziom Aplikacji i Sieci
+
+- **Proaktywna Ochrona przed Włamaniami (IPS)**: `CrowdSec` analizuje zachowanie w sieci i proaktywnie blokuje adresy IP znane ze złośliwej aktywności na całym świecie. `Fail2ban` dodatkowo monitoruje logi w poszukiwaniu prób ataków brute-force.
+- **Szyfrowanie End-to-End**: Cały ruch do Twoich usług jest automatycznie szyfrowany za pomocą certyfikatów SSL/TLS od Let's Encrypt, zarządzanych przez Traefik.
+- **Izolacja Kontenerów**: Wszystkie usługi działają w kontenerach Docker, co izoluje je od siebie i od systemu hosta. Dodatkowo, włączenie `userns-remap` mapuje użytkownika `root` wewnątrz kontenera na zwykłego użytkownika na hoście, co drastycznie ogranicza potencjalne szkody w razie "ucieczki" z kontenera.
+
+### Poziom Danych
+
+- **Zarządzanie Sekretami (`sops`)**: Wszystkie wrażliwe dane – klucze API, hasła do baz danych, tokeny – są szyfrowane na dysku za pomocą `sops` i klucza `age`. Nigdy nie są przechowywane jako jawny tekst.
+- **Szyfrowane Kopie Zapasowe**: Wszystkie kopie zapasowe tworzone przez `Restic` są szyfrowane end-to-end przed wysłaniem ich do zewnętrznej lokalizacji (Backblaze B2). Bez hasła do repozytorium nikt nie jest w stanie odczytać Twoich danych.
 
 ## 7. Licencja
 
