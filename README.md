@@ -56,10 +56,56 @@ Proces instalacji pozostaje taki sam jak w poprzednich wersjach, ale teraz wdra�
 
 ## 4. Przewodnik po Komendach
 
-Do istniejącej listy komend dochodzą nowe, dedykowane dla każdej usługi:
+AutoScript jest sterowany za pomocą prostych, logicznych komend. Wszystkie komendy należy uruchamiać z folderu `/root/autoscript` z uprawnieniami `sudo`.
 
-- `deploy_discourse`, `deploy_wordpress`, `deploy_freshrss`, `deploy_mail`, `deploy_status`
-- `backup:init`, `backup:run`, `backup:restore <snapshot_id>`
+### Komendy Główne
+
+- `sudo ./start.sh install`
+  **Meta-komenda, której użyjesz raz na początku.** Uruchamia w odpowiedniej kolejności wszystkie niezbędne moduły instalacyjne: walidację, hardening systemu, wdrażanie Traefika, monitoringu i wszystkich skonfigurowanych usług. Idealna do szybkiego startu.
+
+- `sudo ./start.sh uninstall`
+  **BARDZO NIEBEZPIECZNE!** Ta komenda całkowicie usuwa **wszystko**, co zostało stworzone przez AutoScript: kontenery, dane aplikacji, wolumeny, obrazy Docker, a nawet odinstalowuje pakiety. Używaj tylko wtedy, gdy chcesz całkowicie wyczyścić serwer. Skrypt poprosi o potwierdzenie, aby zapobiec przypadkowemu użyciu.
+
+- `sudo ./start.sh validate`
+  **Twoja siatka bezpieczeństwa.** Sprawdza poprawność pliku `autoscript.conf`, weryfikuje klucze API i tokeny, ale **nie wprowadza żadnych zmian w systemie**. Zawsze uruchamiaj tę komendę po zmianie konfiguracji.
+
+### Komendy do Zarządzania Usługami
+
+Możesz zarządzać każdą usługą niezależnie. Jest to przydatne do ponownego wdrożenia lub aktualizacji konkretnego komponentu.
+
+- `sudo ./start.sh deploy_mastodon`
+- `sudo ./start.sh deploy_discourse`
+- `sudo ./start.sh deploy_wordpress`
+- `sudo ./start.sh deploy_freshrss`
+- `sudo ./start.sh deploy_mail`
+- `sudo ./start.sh deploy_status`
+- `sudo ./start.sh deploy_monitoring`
+- `sudo ./start.sh deploy_traefik`
+
+### Komendy do Zarządzania Kopiami Zapasowymi
+
+- `sudo ./start.sh backup:init`
+  Inicjalizuje nowe, puste repozytorium kopii zapasowych w Twoim buckecie Backblaze B2. **Musisz to zrobić raz, zanim zadziała automatyczny backup.**
+
+- `sudo ./start.sh backup:run`
+  Ręcznie uruchamia proces tworzenia nowej, szyfrowanej kopii zapasowej całego folderu `/opt/services`.
+
+- `sudo ./start.sh backup:list`
+  Wyświetla listę wszystkich dostępnych migawek (snapshotów) w Twoim repozytorium kopii zapasowych.
+
+- `sudo ./start.sh backup:restore <ID_MIGAWKI>`
+  Odtwarza wybraną migawkę do folderu `/opt/services.restored`. Nie nadpisuje istniejących danych, dając Ci pełną kontrolę nad procesem przywracania.
+
+### Komendy Narzędziowe
+
+- `sudo ./start.sh secrets:edit <nazwa_usługi>`
+  Bezpiecznie otwiera zaszyfrowany plik z sekretami dla danej usługi (np. `mastodon`) w domyślnym edytorze. Po zapisaniu plik jest automatycznie ponownie szyfrowany.
+
+- `sudo ./start.sh secrets:view <nazwa_usługi>`
+  Bezpiecznie wyświetla na ekranie odszyfrowaną zawartość pliku z sekretami, nie zapisując jej nigdzie w formie jawnego tekstu.
+
+- `sudo ./start.sh self-update`
+  Aktualizuje skrypt AutoScript do najnowszej wersji z repozytorium Git. Zalecane do regularnego uruchamiania.
 
 ## 5. Kopie Zapasowe i Odtwarzanie
 
