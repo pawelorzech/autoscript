@@ -50,9 +50,89 @@ AutoScript buduje kompleksowy ekosystem usług, gotowych do użycia zaraz po ins
 2.  Przejdź do sekcji **"B2 Cloud Storage"** > **"Buckets"** i stwórz nowy, prywatny bucket.
 3.  Przejdź do **"App Keys"** i wygeneruj nowy klucz aplikacyjny z dostępem do Twojego bucketa. Będziesz potrzebował `applicationKeyId` (jako `B2_ACCOUNT_ID`) oraz `applicationKey` (jako `B2_ACCOUNT_KEY`).
 
-## 3. Instalacja (Szybki Start)
+## 3. Instalacja: Od Zera do Działającej Platformy
 
-Proces instalacji pozostaje taki sam jak w poprzednich wersjach, ale teraz wdraża znacznie więcej usług!
+Ta sekcja to szczegółowy, kompletny przewodnik, który poprowadzi Cię od zera do w pełni działającej, bezpiecznej platformy. Wykonuj polecenia w podanej kolejności. Zakładamy, że zaczynasz od świeżo zainstalowanego serwera z systemem **Debian 12** lub **Ubuntu 22.04+**.
+
+### Krok 1: Pierwsze Połączenie z Serwerem
+
+Zaraz po stworzeniu serwera u swojego dostawcy hostingu, otrzymasz adres IP. Połącz się z serwerem jako użytkownik `root` za pomocą terminala SSH. Na swoim lokalnym komputerze (Linux, macOS, Windows z WSL lub Git Bash) wpisz:
+
+```bash
+ssh root@<IP_TWOJEGO_SERWERA>
+```
+
+Będziesz poproszony o hasło roota, które dostarczył Twój hostingodawca.
+
+### Krok 2: Pobranie AutoScript
+
+Będąc zalogowanym jako `root` na serwerze, Twoim pierwszym zadaniem jest instalacja `git` (jeśli go nie ma) i pobranie kodu AutoScript. Wszystkie poniższe komendy wykonujesz **na serwerze**.
+
+```bash
+# Aktualizuje listę dostępnych pakietów i instaluje git
+apt update && apt install -y git
+
+# Klonuje repozytorium do folderu /root/autoscript i przechodzi do niego
+git clone https://github.com/pawelorzech/autoscript.git && cd autoscript
+```
+
+### Krok 3: Konfiguracja Platformy
+
+To najważniejszy krok, w którym definiujesz, jak będzie działać Twoja platforma. Musisz stworzyć plik konfiguracyjny i wypełnić go swoimi danymi.
+
+```bash
+# Tworzy kopię pliku z przykładem
+cp autoscript.conf.example autoscript.conf
+
+# Otwiera plik konfiguracyjny w prostym edytorze tekstu
+nano autoscript.conf
+```
+
+Otworzy się edytor `nano`. Użyj strzałek, aby poruszać się po pliku. Uważnie wypełnij **wszystkie wymagane zmienne**, postępując zgodnie z instrukcjami z sekcji "Przewodnik Konfiguracyjny: Zdobywanie Kluczy". Zwróć szczególną uwagę na `PUBLIC_KEY`, `CF_DNS_API_TOKEN` oraz domeny dla poszczególnych usług.
+
+**Aby zapisać plik i wyjść z edytora `nano`:**
+1.  Naciśnij `Ctrl + X`.
+2.  Naciśnij `Y` (aby potwierdzić chęć zapisu).
+3.  Naciśnij `Enter` (aby potwierdzić nazwę pliku).
+
+### Krok 4: Walidacja Konfiguracji
+
+Zanim dokonasz jakichkolwiek zmian w systemie, uruchom walidację. Skrypt sprawdzi, czy klucze API są poprawne i czy może połączyć się z wymaganymi usługami. To Twoja siatka bezpieczeństwa.
+
+```bash
+# Upewnij się, że jesteś w folderze /root/autoscript
+sudo ./start.sh validate
+```
+
+Jeśli walidacja zakończy się sukcesem, jesteś gotowy do instalacji. Jeśli nie, skrypt poinformuje Cię, co należy poprawić w pliku `autoscript.conf`.
+
+### Krok 5: Uruchomienie Instalacji
+
+Wykonaj główną komendę instalacyjną. Skrypt zajmie się resztą. Usiądź wygodnie, proces może potrwać od kilku do kilkunastu minut.
+
+```bash
+# Upewnij się, że jesteś w folderze /root/autoscript
+sudo ./start.sh install
+```
+
+Skrypt zainstaluje wszystkie pakiety, skonfiguruje zabezpieczenia, wdroży wszystkie usługi w kontenerach Docker i połączy je w jeden sprawnie działający ekosystem.
+
+### Krok 6: Kroki Po Instalacji (Bardzo Ważne!)
+
+Gdy skrypt zakończy pracę, Twój serwer jest gotowy, ale jego zabezpieczenia zostały fundamentalnie zmienione:
+
+1.  **Logowanie na `root` jest ZABLOKOWANE.**
+2.  **Port SSH został ZMIENIONY** na losowy numer z zakresu 10000-65535. Aby go poznać, wykonaj na serwerze:
+    ```bash
+    cat /root/ssh_port.txt
+    ```
+3.  **Nowy użytkownik `admin` został stworzony.** Od teraz logujesz się tylko na to konto, używając swojego klucza SSH i nowego portu. Na **swoim lokalnym komputerze** wykonaj:
+    ```bash
+    ssh admin@<IP_TWOJEGO_SERWERA> -p <NOWY_PORT_Z_PLIKU>
+    ```
+4.  **Konfiguracja 2FA (TOTP):** Przy pierwszej próbie użycia `sudo` (np. `sudo ls /root`), na ekranie pojawi się kod QR. Zeskanuj go aplikacją typu Google Authenticator lub Authy i **zapisz kody zapasowe w bezpiecznym miejscu!** Są one jednorazowe i niezbędne do odzyskania dostępu w razie utraty telefonu.
+
+Twoja platforma jest gotowa do użytku. Usługi będą dostępne pod domenami skonfigurowanymi w pliku `autoscript.conf`.
 
 ## 4. Przewodnik po Komendach
 
