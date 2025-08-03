@@ -256,7 +256,7 @@ cmd_help() {
     echo "  install, validate, interactive-setup"
     echo "  deploy_mastodon, deploy_traefik, deploy_monitoring"
     echo "  secrets:edit <service>, secrets:view <service>"
-    echo "  backup:run, backup:restore <snapshot_id>"
+    echo "  backup:init, backup:run, backup:list, backup:restore <snapshot_id>"
     echo "  self-update, uninstall, help"
 }
 
@@ -285,6 +285,10 @@ cmd_backup() {
             log info "Rozpoczynam tworzenie kopii zapasowej..."
             restic backup /opt/services
             log info "Kopia zapasowa zakończona."
+            ;;
+        list)
+            log info "Lista dostępnych migawek:"
+            restic snapshots
             ;;
         restore)
             local snapshot_id="${1:-latest}"
