@@ -239,7 +239,9 @@ main() {
         deploy_monitoring)  cmd_deploy_monitoring "$@" ;;
         secrets:edit)       cmd_secrets "edit" "$@" ;;
         secrets:view)       cmd_secrets "view" "$@" ;;
+        backup:init)        cmd_backup "init" ;;
         backup:run)         cmd_backup "run" ;;
+        backup:list)        cmd_backup "list" ;;
         backup:restore)     cmd_backup "restore" "$@" ;;
         self-update)        cmd_self_update "$@" ;;
         uninstall)          cmd_uninstall "$@" ;;
