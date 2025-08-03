@@ -29,10 +29,88 @@ services:
       retries: 5
     labels:
       - traefik.enable=true
-      - traefik.http.routers.prom.rule=Host(`prometheus.${PRIMARY_DOMAIN}`)
+      - traefik.http.routers.prom.rule=Host(`prometheus.social.ovh`)
       - traefik.http.routers.prom.entrypoints=websecure
       - traefik.http.routers.prom.tls.certresolver=le-dns
       - traefik.http.routers.prom.middlewares=security-headers@file
+
+  node-exporter:
+    image: prom/node-exporter:${NODE_EXPORTER_VER}
+    container_name: node-exporter
+    restart: unless-stopped
+    networks: [monitoring]
+    pid: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - --path.procfs=/host/proc
+      - --path.rootfs=/rootfs
+      - --path.sysfs=/host/sys
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($|/)
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    cap_drop: [ALL]
+    labels:
+      - prometheus.scrape=true
+      - prometheus.port=9100
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:${CADVISOR_VER}
+    container_name: cadvisor
+    restart: unless-stopped
+    networks: [monitoring]
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    privileged: true
+    devices: ["/dev/kmsg:/dev/kmsg"]
+    labels:
+      - prometheus.scrape=true
+      - prometheus.port=8080
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter:${BLACKBOX_VER}
+    container_name: blackbox-exporter
+    restart: unless-stopped
+    networks: [monitoring]
+    volumes:
+      - ./blackbox/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: ["/tmp:size=64m"]
+    cap_drop: [ALL]
+    labels:
+      - prometheus.scrape=true
+      - prometheus.port=9115
+
+  promtail:
+    image: grafana/promtail:${PROMTAIL_VER}
+    container_name: promtail
+    restart: unless-stopped
+    volumes:
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./promtail-config.yml:/etc/promtail/config-docker.yml:ro
+    command: -config.file=/etc/promtail/config-docker.yml
+    networks: [monitoring]
+
+  loki:
+    image: grafana/loki:${LOKI_VER}
+    container_name: loki
+    restart: unless-stopped
+    volumes:
+      - loki_data:/loki
+    networks: [monitoring]
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.loki.rule=Host(`loki.social.ovh`)
+      - traefik.http.routers.loki.entrypoints=websecure
+      - traefik.http.routers.loki.tls.certresolver=le-dns
+      - traefik.http.routers.loki.middlewares=security-headers@file
 
   node-exporter:
     image: prom/node-exporter:${NODE_EXPORTER_VER}

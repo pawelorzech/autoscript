@@ -120,18 +120,7 @@ AutoScript traktuje bezpieczeństwo jako fundamentalny element, a nie dodatek.
 - **Błędy konfiguracyjne?** Uruchom `./start.sh validate`, aby upewnić się, że wszystkie ustawienia są poprawne.
 - **Problem z certyfikatem SSL?** Upewnij się, że Twoja domena poprawnie wskazuje na adres IP serwera, a token Cloudflare ma odpowiednie uprawnienia.
 
-## 8. Roadmapa i Przyszły Rozwój
-
-AutoScript jest aktywnie rozwijany. Poniżej znajduje się lista planowanych funkcji, dla których przygotowano już fundamenty w kodzie:
-
-- [ ] **Pełna implementacja `deploy_mastodon`**.
-- [ ] **Dynamiczne odkrywanie usług** dla Prometheus na podstawie etykiet Docker.
-- [ ] **Centralne logowanie dla hosta** (przesyłanie logów z `/var/log` do Loki).
-- [ ] **Tryb interaktywnej konfiguracji** (`interactive_setup`).
-- [ ] **Generowanie profili AppArmor** dla kluczowych kontenerów.
-- [ ] **Zaawansowane komendy do zarządzania kopiami zapasowymi** (`backup:run`, `backup:restore`).
-
-## 9. Kontrybucja
+## 8. Kontrybucja
 
 Pomysły, zgłoszenia błędów i pull requesty są mile widziane! Proszę tworzyć zgłoszenia (issues) w repozytorium GitHub, aby omówić większe zmiany.
 

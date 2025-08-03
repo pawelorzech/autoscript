@@ -106,12 +106,44 @@ cmd_install() {
 
 # Wdrożenie Mastodona
 cmd_deploy_mastodon() {
+    if has_receipt 'mastodon'; then
+        log warn "Mastodon już jest zainstalowany. Pomijam."
+        return 0
+    fi
     log info "Rozpoczynam wdrożenie Mastodona..."
-    # TODO: Dodać logikę (klonowanie repo, generowanie .env, migracje)
-    log info "(STUB) Klonowanie repozytorium Mastodona..."
-    log info "(STUB) Generowanie pliku .env.production..."
-    log info "(STUB) Uruchamianie kontenerów Mastodona..."
-    log info "(STUB) Wykonywanie migracji bazy danych..."
+
+    local mastodon_dir="/opt/services/mastodon"
+    mkdir -p "$mastodon_dir"
+
+    # Kopiowanie szablonów
+    cp "$SCRIPT_DIR/templates/mastodon/docker-compose.yml" "$mastodon_dir/docker-compose.yml"
+
+    # Generowanie sekretów
+    log info "Generowanie sekretów dla Mastodona..."
+    local secret_key_base=$(head -c 48 /dev/urandom | base64 | tr -d '\n' | tr '/+' 'AB')
+    local otp_secret=$(head -c 48 /dev/urandom | base64 | tr -d '\n' | tr '/+' 'AB')
+    local vapid_keys=$(docker run --rm tootsuite/mastodon bundle exec rake mastodon:webpush:generate_vapid_key_pair)
+    local vapid_private_key=$(echo "$vapid_keys" | grep 'VAPID_PRIVATE_KEY' | cut -d'=' -f2)
+    local vapid_public_key=$(echo "$vapid_keys" | grep 'VAPID_PUBLIC_KEY' | cut -d'=' -f2)
+
+    # Tworzenie pliku .env.production
+    log info "Tworzenie pliku .env.production..."
+    export PRIMARY_DOMAIN POSTGRES_PASSWORD ALERT_SMTP_HOST ALERT_SMTP_USER ALERT_SMTP_PASS ADMIN_EMAIL SECRET_KEY_BASE OTP_SECRET VAPID_PRIVATE_KEY VAPID_PUBLIC_KEY
+    envsubst < "$SCRIPT_DIR/templates/mastodon/.env.production.template" > "$mastodon_dir/.env.production"
+
+    # Uruchomienie usług i migracje
+    log info "Uruchamianie usług Mastodona (db, redis, web)..."
+    (cd "$mastodon_dir" && docker-compose up -d db redis web)
+    
+    log info "Oczekiwanie na gotowość bazy danych..."
+    sleep 15
+
+    log info "Wykonywanie migracji bazy danych..."
+    (cd "$mastodon_dir" && docker-compose run --rm web bundle exec rake db:setup)
+
+    log info "Uruchamianie pozostałych usług (streaming, sidekiq)..."
+    (cd "$mastodon_dir" && docker-compose up -d)
+
     log info "Wdrożenie Mastodona zakończone."
     add_receipt 'mastodon'
 }
@@ -201,16 +233,44 @@ main() {
     case "$cmd" in
         install)            cmd_install "$@" ;;
         validate)           cmd_validate "$@" ;;
+        interactive-setup)  cmd_interactive_setup "$@" ;;
         deploy_mastodon)    cmd_deploy_mastodon "$@" ;;
         deploy_traefik)     cmd_deploy_traefik "$@" ;;
         deploy_monitoring)  cmd_deploy_monitoring "$@" ;;
         secrets:edit)       cmd_secrets "edit" "$@" ;;
         secrets:view)       cmd_secrets "view" "$@" ;;
+        backup:run)         cmd_backup "run" ;;
+        backup:restore)     cmd_backup "restore" "$@" ;;
         self-update)        cmd_self_update "$@" ;;
         uninstall)          cmd_uninstall "$@" ;;
-        help|*)             # TODO: Dodać funkcję wyświetlającą pomoc
-                            log info "Dostępne komendy: install, validate, deploy_mastodon, uninstall, ..." ;;
+        help|*)             cmd_help ;;
     esac
 }
+
+# --- Implementacje Komend ---
+
+cmd_help() {
+    echo "Dostępne komendy:"
+    echo "  install, validate, interactive-setup"
+    echo "  deploy_mastodon, deploy_traefik, deploy_monitoring"
+    echo "  secrets:edit <service>, secrets:view <service>"
+    echo "  backup:run, backup:restore <snapshot_id>"
+    echo "  self-update, uninstall, help"
+}
+
+cmd_interactive_setup() {
+    log info "Rozpoczynam interaktywną konfigurację..."
+    # TODO: Dodać logikę zadawania pytań i generowania autoscript.conf
+    log info "(STUB) Interaktywna konfiguracja zakończona."
+}
+
+cmd_backup() {
+    local action="$1"; shift
+    log info "Zarządzanie kopiami zapasowymi: Akcja='$action'"
+    # TODO: Dodać logikę restic
+    log info "(STUB) Wykonuję operację na kopiach zapasowych..."
+}
+
+# ... (reszta funkcji)
 
 main "$@"

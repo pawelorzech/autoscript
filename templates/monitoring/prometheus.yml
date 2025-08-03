@@ -1,34 +1,37 @@
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
+
 rule_files:
   - "/etc/prometheus/rules/*.yml"
+
 alerting:
   alertmanagers:
-    - static_configs: [{ targets: ['alertmanager:9093'] }]
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
 scrape_configs:
-  - job_name: prometheus
-    static_configs: [{ targets: ['localhost:9090'] }]
-  - job_name: node-exporter
-    static_configs: [{ targets: ['node-exporter:9100'] }]
-  - job_name: cadvisor
-    static_configs: [{ targets: ['cadvisor:8080'] }]
-  - job_name: traefik
-    static_configs: [{ targets: ['traefik:8080'] }]
-  - job_name: blackbox
-    metrics_path: /probe
-    params: { module: [http_2xx] }
+  - job_name: 'prometheus'
     static_configs:
-      - targets:
-        - https://forum.yeswas.pl # Domena zewnętrzna
-        - https://social.ovh # Główna domena Mastodona
-        - https://grafana.social.ovh
-        - https://prometheus.social.ovh
-        - https://alertmanager.social.ovh
+      - targets: ['localhost:9090']
+
+  - job_name: 'docker-services'
+    dockerswarm_sd_configs:
+      - host: unix:///var/run/docker.sock
+        role: tasks
     relabel_configs:
-      - source_labels: [__address__]
-        target_label: __param_target
-      - source_labels: [__param_target]
+      # Scrape only containers that have a prometheus.scrape=true label
+      - source_labels: [__meta_dockerswarm_task_label_prometheus_scrape]
+        action: keep
+        regex: true
+      # Use the container name as the instance label
+      - source_labels: [__meta_dockerswarm_task_desired_state, __meta_dockerswarm_task_name]
+        action: replace
         target_label: instance
-      - target_label: __address__
-        replacement: blackbox-exporter:9115
+        regex: 'running;(.+)'
+      # Allow overriding the port
+      - source_labels: [__meta_dockerswarm_task_label_prometheus_port]
+        action: replace
+        target_label: __address__
+        regex: '(.+)'
+        replacement: '${1}'

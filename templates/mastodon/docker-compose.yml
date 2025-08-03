@@ -1,0 +1,84 @@
+version: '3'
+services:
+  db:
+    restart: always
+    image: postgres:${POSTGRES_VER}
+    shm_size: 256mb
+    networks:
+      - internal_network
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'postgres']
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+  redis:
+    restart: always
+    image: redis:7-alpine
+    networks:
+      - internal_network
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+    volumes:
+      - redis_data:/data
+
+  web:
+    image: tootsuite/mastodon
+    restart: always
+    env_file: .env.production
+    command: bundle exec rails s -p 3000
+    networks:
+      - internal_network
+      - external_network
+    healthcheck:
+      # prettier-ignore
+      test: ['CMD-SHELL', 'wget -q --spider --proxy=off localhost:3000/health || exit 1']
+    ports:
+      - '127.0.0.1:3000:3000'
+    depends_on:
+      - db
+      - redis
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.mastodon-web.rule=Host(`${PRIMARY_DOMAIN}`)
+      - traefik.http.routers.mastodon-web.entrypoints=websecure
+      - traefik.http.routers.mastodon-web.tls.certresolver=le-dns
+
+  streaming:
+    image: tootsuite/mastodon
+    restart: always
+    env_file: .env.production
+    command: node ./streaming
+    networks:
+      - internal_network
+      - external_network
+    depends_on:
+      - db
+      - redis
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.mastodon-streaming.rule=Host(`${PRIMARY_DOMAIN}`) && PathPrefix(`/api/v1/streaming`)
+      - traefik.http.routers.mastodon-streaming.entrypoints=websecure
+      - traefik.http.routers.mastodon-streaming.tls.certresolver=le-dns
+
+  sidekiq:
+    image: tootsuite/mastodon
+    restart: always
+    env_file: .env.production
+    command: bundle exec sidekiq
+    depends_on:
+      - db
+      - redis
+    networks:
+      - internal_network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  external_network:
+    external: true
+    name: traefik_proxy
+  internal_network: {}
