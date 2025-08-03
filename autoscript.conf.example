@@ -1,75 +1,58 @@
 # ===================================================================
-# Konfiguracja AutoScript v3
-# ===================================================================
-#
-# Instrukcja:
-# 1. Skopiuj ten plik do `autoscript.conf`
-# 2. Wypełnij poniższe zmienne.
-# 3. Uruchom `./start.sh validate` aby sprawdzić poprawność konfiguracji.
-#
+# Konfiguracja AutoScript v5 - Kompletna Platforma Serwerowa
 # ===================================================================
 
 # -------------------------------------------------------------------
 # SEKCJA WYMAGANA
 # -------------------------------------------------------------------
-
 PUBLIC_KEY=''
 CF_DNS_API_TOKEN=''
 
 # -------------------------------------------------------------------
 # USTAWIENIA GŁÓWNE
 # -------------------------------------------------------------------
-
-# Główna domena, na której będzie działać Mastodon
 PRIMARY_DOMAIN='social.ovh'
-
-# Domena dla usług pomocniczych (monitoringu, itp.)
-# Domyślnie subdomena głównej, ale można zmienić na inną.
-SERVICES_DOMAIN="${PRIMARY_DOMAIN}"
-
 ADMIN_EMAIL='admin@social.ovh'
 TIMEZONE='Europe/Warsaw'
 
 # -------------------------------------------------------------------
-# USTAWIENIA POWIADOMIEŃ (SMTP)
+# USTAWIENIA ZAPASOWE (BACKBLAZE B2)
 # -------------------------------------------------------------------
-
-ALERT_SMTP_HOST='mail.social.ovh:587'
-ALERT_SMTP_USER='alerts@social.ovh'
-ALERT_SMTP_PASS=''
-ALERT_SMTP_FROM='alerts@social.ovh'
-
-# -------------------------------------------------------------------
-# MODUŁY OPCJONALNE (włącz/wyłącz za pomocą true/false)
-# -------------------------------------------------------------------
-
-INSTALL_FAIL2BAN=true
-INSTALL_DATABASE=true # Wymagane przez Mastodona
-INSTALL_LOKI=true
-INSTALL_BACKUP=false
-ENABLE_APPARMOR=true
-
-# -------------------------------------------------------------------
-# KONFIGURACJA BAZY DANYCH (jeśli INSTALL_DATABASE=true)
-# -------------------------------------------------------------------
-
-POSTGRES_PASSWORD=''
-
-# -------------------------------------------------------------------
-# KONFIGURACJA KOPII ZAPASOWYCH (jeśli INSTALL_BACKUP=true)
-# -------------------------------------------------------------------
-
-BACKUP_REPO=''
-BACKUP_PASSWORD=''
-AWS_ACCESS_KEY_ID=''
-AWS_SECRET_ACCESS_KEY=''
+# Włącz, aby aktywować codzienne, szyfrowane kopie zapasowe.
+INSTALL_BACKUP=true
+B2_ACCOUNT_ID=''
+B2_ACCOUNT_KEY=''
+B2_REPOSITORY='' # np. b2:twoja-unikalna-nazwa-bucket
+RESTIC_PASSWORD='' # Hasło do szyfrowania kopii zapasowych
 BACKUP_CRON_SCHEDULE='30 3 * * *'
 
 # -------------------------------------------------------------------
-# WERSJE OBRAZÓW DOCKER
+# KONFIGURACJA USŁUG
 # -------------------------------------------------------------------
 
-TRAEFIK_VER='v3.0'
-PROMETHEUS_VER='latest'
-GRAFANA_VER='latest'
-# ... (pozostałe wersje)
+# --- Mastodon ---
+MASTODON_DOMAIN="${PRIMARY_DOMAIN}"
+
+# --- Discourse ---
+DISCOURSE_DOMAIN="forum.${PRIMARY_DOMAIN}"
+
+# --- WordPress ---
+WORDPRESS_DOMAIN="blog.${PRIMARY_DOMAIN}"
+
+# --- FreshRSS ---
+FRESHRSS_DOMAIN="rss.${PRIMARY_DOMAIN}"
+
+# --- Serwer Poczty (Mail-in-a-Box style) ---
+MAIL_DOMAIN="${PRIMARY_DOMAIN}" # Poczta będzie działać na głównej domenie
+MAIL_ADMIN_PASSWORD='' # Hasło do panelu admina poczty
+
+# --- Pulpit Statusu (Uptime Kuma) ---
+STATUS_DOMAIN="status.${PRIMARY_DOMAIN}"
+
+# --- Bazy Danych (hasła generowane losowo, jeśli puste) ---
+POSTGRES_PASSWORD=''
+DISCOURSE_DB_PASSWORD=''
+WORDPRESS_DB_PASSWORD=''
+
+# --- Wersje Obrazów Docker ---
+# ... (wersje dla wszystkich usług)

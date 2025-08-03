@@ -1,0 +1,22 @@
+version: '3'
+services:
+  app:
+    image: discourse/discourse:latest
+    restart: always
+    volumes:
+      - ./shared:/shared
+      - ./logs:/var/log
+    networks:
+      - internal_network
+      - external_network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.discourse.rule=Host(`${DISCOURSE_DOMAIN}`)
+      - traefik.http.routers.discourse.entrypoints=websecure
+      - traefik.http.routers.discourse.tls.certresolver=le-dns
+
+networks:
+  external_network:
+    external: true
+    name: traefik_proxy
+  internal_network: {}

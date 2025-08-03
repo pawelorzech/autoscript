@@ -267,8 +267,33 @@ cmd_interactive_setup() {
 cmd_backup() {
     local action="$1"; shift
     log info "Zarządzanie kopiami zapasowymi: Akcja='$action'"
-    # TODO: Dodać logikę restic
-    log info "(STUB) Wykonuję operację na kopiach zapasowych..."
+
+    export B2_ACCOUNT_ID
+    export B2_ACCOUNT_KEY
+    export RESTIC_REPOSITORY="${B2_REPOSITORY}"
+    export RESTIC_PASSWORD
+
+    case "$action" in
+        init)
+            log info "Inicjalizacja repozytorium kopii zapasowych..."
+            restic init
+            log info "Repozytorium zainicjalizowane."
+            ;;
+        run)
+            log info "Rozpoczynam tworzenie kopii zapasowej..."
+            restic backup /opt/services
+            log info "Kopia zapasowa zakończona."
+            ;;
+        restore)
+            local snapshot_id="${1:-latest}"
+            log info "Przywracanie migawki: ${snapshot_id}"
+            restic restore "$snapshot_id" --target /opt/services.restored
+            log info "Przywracanie zakończone do folderu /opt/services.restored"
+            ;;
+        *)
+            log error "Nieznana akcja dla kopii zapasowej: $action"
+            ;;
+    esac
 }
 
 # ... (reszta funkcji)
