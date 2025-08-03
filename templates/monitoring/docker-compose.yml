@@ -112,49 +112,6 @@ services:
       - traefik.http.routers.loki.tls.certresolver=le-dns
       - traefik.http.routers.loki.middlewares=security-headers@file
 
-  node-exporter:
-    image: prom/node-exporter:${NODE_EXPORTER_VER}
-    container_name: node-exporter
-    restart: unless-stopped
-    networks: [monitoring]
-    pid: host
-    volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /:/rootfs:ro
-    command:
-      - --path.procfs=/host/proc
-      - --path.rootfs=/rootfs
-      - --path.sysfs=/host/sys
-      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
-    security_opt: [no-new-privileges:true]
-    read_only: true
-    cap_drop: [ALL]
-
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor:${CADVISOR_VER}
-    container_name: cadvisor
-    restart: unless-stopped
-    networks: [monitoring]
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:rw
-      - /sys:/sys:ro
-      - /var/lib/docker:/var/lib/docker:ro
-    privileged: true
-    devices: ["/dev/kmsg:/dev/kmsg"]
-
-  blackbox-exporter:
-    image: prom/blackbox-exporter:${BLACKBOX_VER}
-    container_name: blackbox-exporter
-    restart: unless-stopped
-    networks: [monitoring]
-    volumes:
-      - ./blackbox/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
-    security_opt: [no-new-privileges:true]
-    read_only: true
-    tmpfs: ["/tmp:size=64m"]
-    cap_drop: [ALL]
 
   alertmanager:
     image: prom/alertmanager:${ALERTMANAGER_VER}
@@ -216,3 +173,4 @@ volumes:
   prometheus_data:
   grafana_data:
   alertmanager_data:
+  loki_data:
